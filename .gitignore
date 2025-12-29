@@ -1,0 +1,9 @@
+# Ignora a pasta de dados (NUNCA mande o banco real pro Git)
+pb_data/
+
+# Ignora o executável do PocketBase (quem baixar, baixa o da sua versão)
+pocketbase
+
+# Arquivos de sistema e logs
+.DS_Store
+*.log
