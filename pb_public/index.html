@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PCM Flow | Enterprise</title>
+    <title>PCM Flow | Enterprise V4</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pocketbase/0.21.1/pocketbase.umd.min.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
@@ -41,6 +41,10 @@
         .top-bar { background: white; height: 64px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 0 30px; }
         .mobile-menu-btn { display: none; font-size: 1.5rem; background: none; border: none; color: var(--primary); cursor: pointer; }
         
+        /* NOTIFICATIONS */
+        .notif-btn { position: relative; cursor: pointer; font-size: 1.2rem; margin-right: 15px; color: var(--secondary); }
+        .notif-badge { position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; font-size: 0.7rem; width: 18px; height: 18px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; display: none; }
+        
         .dash-kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 25px; }
         .kpi-card { background: white; padding: 24px; border-radius: 12px; border: 1px solid var(--border); }
         .kpi-value { font-size: 2rem; font-weight: 700; color: var(--primary); margin-top: 5px; }
@@ -77,13 +81,14 @@
         .btn-outline { background: white; border: 1px solid #cbd5e1; color: var(--secondary); }
         .btn-purple { background: var(--purple); color: white; }
 
-        /* Chat Logs */
         .chat-log-sys { font-size: 0.75rem; color: #64748b; text-align: center; margin: 8px 0; font-style: italic; background: #f1f5f9; padding: 4px; border-radius: 4px; }
         .chat-time { font-size: 0.7rem; color: #94a3b8; display: block; margin-top: 4px; text-align: right; }
 
+        /* TOAST NOTIFICATIONS */
         #toast-container { position: fixed; top: 20px; right: 20px; z-index: 5000; display: flex; flex-direction: column; gap: 10px; }
         .toast { background: white; padding: 16px 20px; border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border-left: 5px solid var(--accent); min-width: 300px; transform: translateX(120%); transition: transform 0.3s; display: flex; align-items: center; justify-content: space-between; }
         .toast.show { transform: translateX(0); } .toast.error { border-left-color: var(--danger); }
+        
         .loading-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.8); z-index: 9999; display: flex; justify-content: center; align-items: center; font-weight: 600; color: var(--primary); flex-direction: column; gap: 15px; }
         .spinner { width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -128,8 +133,17 @@
 
     <div class="main-content" id="main-app">
         <div class="top-bar">
-            <div class="flex items-center gap-10"><button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button><h2 style="margin:0; font-size:1.2rem; color:var(--primary);" id="page-title">Dashboard</h2></div>
-            <button onclick="carregarDadosAtuais()" class="btn btn-sm btn-outline" title="Recarregar Dados">🔄</button>
+            <div class="flex items-center gap-10">
+                <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+                <h2 style="margin:0; font-size:1.2rem; color:var(--primary);" id="page-title">Dashboard</h2>
+            </div>
+            <div class="flex items-center">
+                <div class="notif-btn" title="Notificações">
+                    🔔
+                    <div id="notif-badge" class="notif-badge">0</div>
+                </div>
+                <button onclick="carregarDadosAtuais()" class="btn btn-sm btn-outline" title="Recarregar Dados">🔄</button>
+            </div>
         </div>
         <div class="content-scroll">
             
@@ -155,7 +169,7 @@
                 </div>
                 <div class="table-container">
                     <table class="data-table">
-                        <thead><tr><th>Item</th><th>Código</th><th>Qtd</th><th>Fornecedor</th><th>Valor Unit.</th><th>Total</th><th>Detalhes da Solicitação</th><th style="text-align:center">Ação</th></tr></thead>
+                        <thead><tr><th>Item</th><th>Código</th><th>Qtd</th><th>Fornecedor</th><th>Valor Unit.</th><th>Total</th><th>Detalhes</th><th style="text-align:center">Ação</th></tr></thead>
                         <tbody id="tabela-aprovacao"></tbody>
                     </table>
                 </div>
@@ -179,7 +193,7 @@
 
             <div id="view-compras" class="hidden">
                 <div class="flex items-center gap-10" style="margin-bottom: 20px; flex-wrap: wrap;">
-                    <input type="text" id="busca-compra" placeholder="Buscar Item, Descrição..." class="form-control" style="width: 250px;" onkeyup="renderTabelaCompras()">
+                    <input type="text" id="busca-compra" placeholder="Buscar Item..." class="form-control" style="width: 250px;" onkeyup="renderTabelaCompras()">
                     <select id="filtro-compra-status" class="form-control" style="width: 200px;" onchange="renderTabelaCompras()">
                         <option value="">Todos Status</option>
                         <option value="Em cotação">Em cotação</option>
@@ -334,7 +348,7 @@
             c.appendChild(el); setTimeout(()=>el.classList.add('show'),10); setTimeout(()=>{el.classList.remove('show');setTimeout(()=>el.remove(),300)},4000);
         }
 
-        // --- SISTEMA DE LOG RASTREÁVEL (MELHORADO) ---
+        // --- SISTEMA DE LOG RASTREÁVEL ---
         async function registrarHistorico(acaoId, msg, tipo='sistema') {
             const nomeUsuario = State.usuarioAtual ? State.usuarioAtual.name : 'Sistema';
             const msgCompleta = tipo === 'sistema' ? `${nomeUsuario} ${msg}` : msg;
@@ -395,11 +409,28 @@
             ]);
             if(r1.success) State.dadosAcoes=r1.data; if(r2.success) State.dadosMateriais=r2.data;
             const tela = document.querySelector('.menu-item.active').id.replace('menu-','');
-            navegar(tela);
+            // Só re-renderiza a tela atual se NÃO estivermos editando um campo na tabela de compras (para evitar perder foco)
+            if(document.activeElement.tagName !== 'INPUT' || tela !== 'compras') {
+                navegar(tela);
+            }
         }
+        
         function iniciarRealtime() {
+            pb.collection('materiais').subscribe('*', function(e) {
+                carregarDadosAtuais();
+                
+                // --- SISTEMA DE NOTIFICAÇÃO ---
+                if(e.action === 'create') {
+                    showToast("🔔 Novo item adicionado!");
+                    document.getElementById('notif-badge').style.display = 'flex';
+                    document.getElementById('notif-badge').innerText = '1'; 
+                }
+                if(e.action === 'update' && e.record.status_compra === 'Aprovado') {
+                    showToast("✅ Item Aprovado!");
+                }
+            });
+            
             pb.collection('acoes').subscribe('*', ()=>carregarDadosAtuais());
-            pb.collection('materiais').subscribe('*', ()=>carregarDadosAtuais());
             pb.collection('historico').subscribe('*', (e)=>{if(State.acaoAtualId && e.record.acao_vinculada===State.acaoAtualId) renderChat(State.acaoAtualId)});
         }
 
@@ -471,13 +502,10 @@
                         <td>${m.fornecedor || '-'}</td>
                         <td>R$ ${(m.valor||0).toFixed(2)}</td>
                         <td><b>R$ ${total.toFixed(2)}</b></td>
-                        <td>${contexto}</td>
+                        <td><button class="btn btn-sm btn-outline" onclick="abrirModalDetalhes('${m.acao_vinculada}')">🔍 Detalhes</button></td>
                         <td style="text-align:center;">
-                            <button class="btn btn-sm btn-outline" onclick="abrirModalDetalhes('${m.acao_vinculada}')">🔍 Ver Detalhes</button>
-                            <div style="margin-top:5px">
-                                <button class="btn btn-sm btn-success" onclick="decidirAprovacao('${m.id}', 'Aprovado')" title="Aprovar">✅</button>
-                                <button class="btn btn-sm btn-outline" onclick="decidirAprovacao('${m.id}', 'Em cotação')" title="Reprovar">↩️</button>
-                            </div>
+                            <button class="btn btn-sm btn-success" onclick="decidirAprovacao('${m.id}', 'Aprovado')" title="Aprovar">✅</button>
+                            <button class="btn btn-sm btn-outline" onclick="decidirAprovacao('${m.id}', 'Em cotação')" title="Reprovar">↩️</button>
                         </td>
                     </tr>
                 `;
@@ -501,7 +529,11 @@
         }
         
         function renderTabelaCompras() {
-            const tb=document.getElementById('tabela-compras'); tb.innerHTML='';
+            // Só renderiza se a tabela estiver vazia OU se não tiver input focado (para não perder o que digita)
+            const tb=document.getElementById('tabela-compras'); 
+            if(document.activeElement.tagName === 'INPUT' && tb.innerHTML.trim() !== "") return;
+
+            tb.innerHTML='';
             const txt=document.getElementById('busca-compra').value.toLowerCase(); const st=document.getElementById('filtro-compra-status').value;
             State.dadosMateriais.filter(m=>(m.descricao+(m.expand?.acao_vinculada?.ordem_servico||'')).toLowerCase().includes(txt) && (!st || m.status_compra===st)).forEach(m=>{
                 let cor = '#334155';
@@ -533,7 +565,7 @@
                         <td><small>${m.codigo_item||'-'}</small></td>
                         <td>${m.quantidade}</td>
                         <td><input type="number" class="form-control w-24" placeholder="R$ 0.00" value="${m.valor||''}" onblur="upMat('${m.id}','valor',this.value)" style="width:100px;"></td>
-                        <td><span style="font-weight:bold; color:var(--primary)">R$ ${total.toFixed(2)}</span></td>
+                        <td><span id="total-${m.id}" style="font-weight:bold; color:var(--primary)">R$ ${total.toFixed(2)}</span></td>
                         <td><input type="text" class="form-control" placeholder="Fornecedor" value="${m.fornecedor||''}" onblur="upMat('${m.id}','fornecedor',this.value)" style="width:120px;"></td>
                         <td><input type="date" class="form-control" value="${dateVal}" onblur="upMat('${m.id}','data_entrega',this.value)" style="width:130px;"></td>
                         <td><button class="btn btn-sm btn-outline" onclick="abrirModalDetalhes('${m.acao_vinculada}')">SC/Chat</button></td>
@@ -549,18 +581,26 @@
         }
 
         async function upMat(id,k,v) { 
-            const d={}; d[k]=v; if(k=='data_entrega' && !v) d[k]=null; 
-            await pb.collection('materiais').update(id,d);
-            
-            // Atualiza localmente para garantir consistência visual imediata
+            // CORREÇÃO CRÍTICA: Atualiza Localmente PRIMEIRO
             const idx = State.dadosMateriais.findIndex(m=>m.id===id);
             if(idx >= 0) { State.dadosMateriais[idx][k] = v; }
 
+            // Salva no Banco sem bloquear a UI
+            const d={}; d[k]=v; if(k=='data_entrega' && !v) d[k]=null; 
+            pb.collection('materiais').update(id,d); 
+            
+            // Log Inteligente
             if(k === 'valor' || k === 'fornecedor' || k === 'data_entrega') {
                 const item = State.dadosMateriais.find(m=>m.id===id);
                 let campoNome = k === 'valor' ? 'valor unitário' : (k === 'fornecedor' ? 'fornecedor' : 'data');
-                await registrarHistorico(item.acao_vinculada, `atualizou ${campoNome} do item "${item.descricao}" para: ${v}`);
-                if(k === 'valor') carregarDadosAtuais(); 
+                registrarHistorico(item.acao_vinculada, `atualizou ${campoNome} do item "${item.descricao}" para: ${v}`);
+                
+                // Atualiza visualmente o Total se mudou o valor (sem recarregar tabela)
+                if(k === 'valor') {
+                    const novoTotal = (parseFloat(v) || 0) * (item.quantidade || 0);
+                    const elTotal = document.getElementById(`total-${id}`);
+                    if(elTotal) elTotal.innerText = `R$ ${novoTotal.toFixed(2)}`;
+                }
             }
         }
 
