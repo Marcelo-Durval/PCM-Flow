@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PCM Flow | Enterprise V4</title>
+    <title>PCM Flow | V9 UX & Status</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pocketbase/0.21.1/pocketbase.umd.min.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
@@ -17,69 +17,95 @@
             --primary: #0f172a; --secondary: #334155; --accent: #2563eb;
             --bg: #f8fafc; --white: #ffffff;
             --danger: #ef4444; --warning: #f59e0b; --success: #10b981;
-            --purple: #7c3aed; --border: #e2e8f0; --text-muted: #64748b;
             --sidebar-width: 260px;
         }
         
-        * { box-sizing: border-box; outline: none; }
+        * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; display: flex; height: 100vh; overflow: hidden; color: #1e293b; }
         .hidden { display: none !important; }
-        .flex { display: flex; } .flex-col { flex-direction: column; } .gap-10 { gap: 10px; } .items-center { align-items: center; } .w-full { width: 100%; } .justify-between { justify-content: space-between; }
+        .flex { display: flex; } .flex-col { flex-direction: column; } .gap-10 { gap: 10px; } .items-center { align-items: center; } .w-full { width: 100%; }
         
         /* Layout */
         .sidebar { width: var(--sidebar-width); background: var(--primary); color: white; display: flex; flex-direction: column; padding: 25px; transition: transform 0.3s ease; z-index: 200; flex-shrink: 0; }
         .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; width: 100%; }
-        .content-scroll { padding: 30px; overflow-y: auto; flex: 1; scroll-behavior: smooth; }
+        .content-scroll { padding: 20px; overflow-y: auto; flex: 1; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
         .menu-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:150; display:none; }
 
-        /* Sidebar & UI */
-        .brand { font-size: 1.5rem; font-weight: 800; margin-bottom: 40px; display: flex; align-items: center; gap: 10px; color: white; }
+        /* Sidebar Items */
+        .brand { font-size: 1.5rem; font-weight: 800; margin-bottom: 30px; display: flex; align-items: center; gap: 10px; color: white; }
         .menu-item { padding: 12px 15px; margin-bottom: 5px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 12px; color: #94a3b8; font-weight: 500; border: 1px solid transparent; transition: 0.2s; }
         .menu-item:hover { background: rgba(255,255,255,0.05); color: white; }
         .menu-item.active { background: var(--accent); color: white; box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
 
-        .top-bar { background: white; height: 64px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 0 30px; }
-        .mobile-menu-btn { display: none; font-size: 1.5rem; background: none; border: none; color: var(--primary); cursor: pointer; }
+        /* Topbar */
+        .top-bar { background: white; height: 60px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 0 20px; flex-shrink: 0; }
+        .mobile-menu-btn { display: none; font-size: 1.5rem; background: none; border: none; color: var(--primary); cursor: pointer; padding: 5px; }
         
-        /* NOTIFICATIONS */
-        .notif-btn { position: relative; cursor: pointer; font-size: 1.2rem; margin-right: 15px; color: var(--secondary); }
-        .notif-badge { position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; font-size: 0.7rem; width: 18px; height: 18px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; display: none; }
+        /* Notificações */
+        .notif-container { position: relative; margin-right: 15px; }
+        .notif-btn { cursor: pointer; font-size: 1.3rem; color: var(--secondary); position: relative; padding: 5px; }
+        .notif-badge { position: absolute; top: 0; right: 0; background: var(--danger); color: white; font-size: 0.6rem; width: 16px; height: 16px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; display: none; }
+        .notif-dropdown { position: absolute; top: 120%; right: -10px; width: 280px; background: white; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15); z-index: 1000; display: none; max-height: 300px; overflow-y: auto; }
+        .notif-dropdown.active { display: block; }
+        .notif-item { padding: 12px; border-bottom: 1px solid #f1f5f9; font-size: 0.85rem; color: #334155; }
         
-        .dash-kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 25px; }
-        .kpi-card { background: white; padding: 24px; border-radius: 12px; border: 1px solid var(--border); }
-        .kpi-value { font-size: 2rem; font-weight: 700; color: var(--primary); margin-top: 5px; }
-        .kpi-title { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
+        /* Dashboard Grid */
+        .dash-filters { background: white; padding: 15px; border-radius: 10px; border: 1px solid var(--border); display: flex; gap: 10px; align-items: end; margin-bottom: 20px; flex-wrap: wrap; }
+        .dash-kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .kpi-card { background: white; padding: 20px; border-radius: 10px; border: 1px solid var(--border); }
+        .kpi-value { font-size: 1.8rem; font-weight: 700; color: var(--primary); margin-top: 5px; }
+        .kpi-title { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
 
-        .charts-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 25px; }
-        .chart-box { background: white; padding: 20px; border-radius: 10px; border: 1px solid var(--border); height: 350px; display: flex; flex-direction: column; }
-        .chart-header { margin-bottom: 10px; font-weight: 600; color: var(--primary); font-size: 0.95rem; text-align: center; }
+        .charts-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
+        .chart-box { background: white; padding: 15px; border-radius: 10px; border: 1px solid var(--border); height: 300px; display: flex; flex-direction: column; }
         .chart-wrapper { flex: 1; position: relative; width: 100%; overflow: hidden; }
+        #calendar-container { background: white; padding: 15px; border-radius: 10px; border: 1px solid var(--border); height: 500px; margin-bottom: 30px; }
 
-        #calendar-container { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); height: 600px; margin-bottom: 30px; }
-        .fc-toolbar-title { font-size: 1.1rem !important; color: var(--primary); }
-        .fc-button { font-size: 0.85rem !important; }
-
-        .table-container { background: white; border-radius: 10px; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .data-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-        .data-table th { background: #f8fafc; padding: 12px 14px; text-align: left; font-weight: 600; color: #475569; border-bottom: 1px solid var(--border); white-space: nowrap; }
-        .data-table td { padding: 10px 14px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; color: #334155; }
+        /* Tabelas Responsivas */
+        .table-container { 
+            background: white; border-radius: 10px; border: 1px solid var(--border); 
+            overflow-x: auto; 
+            -webkit-overflow-scrolling: touch; 
+            margin-bottom: 20px;
+        }
+        .data-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; min-width: 800px; }
+        .data-table th { background: #f8fafc; padding: 12px; text-align: left; font-weight: 600; color: #475569; border-bottom: 1px solid var(--border); white-space: nowrap; }
+        .data-table td { padding: 12px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; color: #334155; }
         .data-table tr:hover { background-color: #f8fafc; }
-        
-        .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
-        .bd-Alta { background: #fee2e2; color: #991b1b; } .bd-Média { background: #fef3c7; color: #92400e; } .bd-Baixa { background: #dcfce7; color: #166534; }
 
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 1000; display: flex; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: all 0.2s; }
-        .modal-overlay.active { opacity: 1; visibility: visible; }
-        .modal-box { background: white; border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); display: flex; flex-direction: column; overflow: hidden; width: 95%; max-width: 1100px; max-height: 90vh; }
+        /* Badges */
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; display: inline-block; white-space: nowrap; }
+        /* Urgencia */
+        .bd-Alta { background: #fee2e2; color: #991b1b; } .bd-Média { background: #fef3c7; color: #92400e; } .bd-Baixa { background: #dcfce7; color: #166534; }
         
-        .form-control { width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; transition: border 0.2s; }
-        .form-control:focus { border-color: var(--accent); }
-        .form-label { font-size: 0.85rem; font-weight: 600; color: var(--secondary); margin-bottom: 6px; display: block; }
-        .btn { padding: 8px 16px; border-radius: 6px; border: none; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 0.9rem; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
-        .btn-sm { padding: 5px 10px; font-size: 0.8rem; }
+        /* Status MATERIAIS */
+        .st-cotacao { background: #fff7ed; color: #9a3412; border: 1px solid #fed7aa; }
+        .st-aprovacao { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+        .st-aprovado { background: #faf5ff; color: #6b21a8; border: 1px solid #e9d5ff; }
+        .st-entrega { background: #f0f9ff; color: #0369a1; border: 1px solid #bae6fd; }
+        .st-entregue { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+
+        /* Status SOLICITAÇÃO (Novos) */
+        .sts-sem-mat { background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; } /* Cinza */
+        .sts-em-compras { background: #dbeafe; color: #2563eb; border: 1px solid #93c5fd; } /* Azul */
+        .sts-finalizado { background: #dcfce7; color: #16a34a; border: 1px solid #86efac; } /* Verde */
+
+        /* Forms & Modals */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(2px); z-index: 2000; display: flex; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: all 0.2s; }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-box { background: white; border-radius: 10px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden; width: 95%; max-width: 1100px; max-height: 95vh; }
+        
+        .form-control { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; transition: border 0.2s; }
+        .form-control:focus { border-color: var(--accent); outline: none; }
+        .form-label { font-size: 0.8rem; font-weight: 600; color: var(--secondary); margin-bottom: 5px; display: block; }
+        .btn { padding: 10px 16px; border-radius: 6px; border: none; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 0.9rem; display: inline-flex; align-items: center; justify-content: center; gap: 8px; white-space: nowrap; }
+        .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
         .btn-primary { background: var(--accent); color: white; } .btn-success { background: var(--success); color: white; } 
         .btn-outline { background: white; border: 1px solid #cbd5e1; color: var(--secondary); }
-        .btn-purple { background: var(--purple); color: white; }
+
+        .mat-card { border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-bottom: 10px; background: white; }
+        .mat-row { display: grid; grid-template-columns: repeat(12, 1fr); gap: 10px; align-items: end; margin-bottom: 5px; }
+        .col-span-3 { grid-column: span 3; } .col-span-4 { grid-column: span 4; } .col-span-6 { grid-column: span 6; } .col-span-12 { grid-column: span 12; }
 
         .chat-log-sys { font-size: 0.75rem; color: #64748b; text-align: center; margin: 8px 0; font-style: italic; background: #f1f5f9; padding: 4px; border-radius: 4px; }
         .chat-time { font-size: 0.7rem; color: #94a3b8; display: block; margin-top: 4px; text-align: right; }
@@ -88,13 +114,23 @@
         #toast-container { position: fixed; top: 20px; right: 20px; z-index: 5000; display: flex; flex-direction: column; gap: 10px; }
         .toast { background: white; padding: 16px 20px; border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border-left: 5px solid var(--accent); min-width: 300px; transform: translateX(120%); transition: transform 0.3s; display: flex; align-items: center; justify-content: space-between; }
         .toast.show { transform: translateX(0); } .toast.error { border-left-color: var(--danger); }
-        
-        .loading-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.8); z-index: 9999; display: flex; justify-content: center; align-items: center; font-weight: 600; color: var(--primary); flex-direction: column; gap: 15px; }
+        .loading-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.9); z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; gap: 15px; }
         .spinner { width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
         @media (max-width: 1024px) { .charts-row { grid-template-columns: 1fr; } .chart-box { height: 300px; } }
-        @media (max-width: 768px) { .sidebar { position: fixed; height: 100%; transform: translateX(-100%); box-shadow: 5px 0 15px rgba(0,0,0,0.1); } .sidebar.active { transform: translateX(0); } .mobile-menu-btn { display: block; } .dash-kpi-grid { grid-template-columns: 1fr; } .content-scroll { padding: 15px; } .modal-box { height: 100%; border-radius: 0; } }
+        @media (max-width: 768px) {
+            .sidebar { position: fixed; height: 100%; transform: translateX(-100%); box-shadow: 5px 0 15px rgba(0,0,0,0.1); }
+            .sidebar.active { transform: translateX(0); }
+            .mobile-menu-btn { display: block; }
+            .dash-kpi-grid { grid-template-columns: 1fr; }
+            .content-scroll { padding: 10px; }
+            .modal-box { height: 100%; max-height: 100%; border-radius: 0; }
+            .mat-row { display: flex; flex-direction: column; gap: 10px; }
+            .mat-row > div { width: 100%; }
+            .dash-filters { flex-direction: column; align-items: stretch; }
+            .top-bar { padding: 0 15px; }
+        }
     </style>
 </head>
 <body>
@@ -106,11 +142,11 @@
     <div id="login-screen" class="modal-overlay active" style="background: #0f172a; z-index: 9999;">
         <div class="modal-box" style="max-width: 400px; height: auto; padding: 40px; text-align: center;">
             <h1 style="color:var(--primary); margin: 0 0 10px 0;">🔐 PCM Flow</h1>
-            <p style="color:var(--text-muted); margin-bottom: 30px;">Acesso ao Sistema</p>
+            <p style="color:var(--text-muted); margin-bottom: 30px;">Acesso Restrito</p>
             <form onsubmit="event.preventDefault(); fazerLogin();">
                 <div style="margin-bottom: 15px; text-align: left;"><label class="form-label">E-mail</label><input type="text" id="email" class="form-control" required></div>
                 <div style="margin-bottom: 25px; text-align: left;"><label class="form-label">Senha</label><input type="password" id="password" class="form-control" required></div>
-                <button type="submit" class="btn btn-primary w-full" style="padding: 14px;">ENTRAR</button>
+                <button type="submit" class="btn btn-primary w-full" style="padding: 14px;">ENTRAR NO SISTEMA</button>
             </form>
             <div id="login-error-msg" style="margin-top: 15px; color: #ef4444; font-size: 0.9rem; display:none;">Erro de conexão.</div>
         </div>
@@ -138,38 +174,51 @@
                 <h2 style="margin:0; font-size:1.2rem; color:var(--primary);" id="page-title">Dashboard</h2>
             </div>
             <div class="flex items-center">
-                <div class="notif-btn" title="Notificações">
-                    🔔
-                    <div id="notif-badge" class="notif-badge">0</div>
+                <div class="notif-container">
+                    <div class="notif-btn" onclick="toggleNotifDropdown()">
+                        🔔<div id="notif-badge" class="notif-badge">0</div>
+                    </div>
+                    <div id="notif-dropdown" class="notif-dropdown">
+                        <div style="padding:10px; border-bottom:1px solid #e2e8f0; font-weight:bold; color:var(--primary)">Últimas Atividades</div>
+                        <div id="notif-list"></div>
+                    </div>
                 </div>
-                <button onclick="carregarDadosAtuais()" class="btn btn-sm btn-outline" title="Recarregar Dados">🔄</button>
+                <button onclick="carregarDadosAtuais()" class="btn btn-sm btn-outline" title="Recarregar">🔄</button>
             </div>
         </div>
+        
         <div class="content-scroll">
             
             <div id="view-dashboard">
+                <div class="dash-filters">
+                    <div style="flex:1;"><label class="form-label">De:</label><input type="date" id="dash-start" class="form-control"></div>
+                    <div style="flex:1;"><label class="form-label">Até:</label><input type="date" id="dash-end" class="form-control"></div>
+                    <button onclick="aplicarFiltroDashboard()" class="btn btn-primary">🔍 Filtrar</button>
+                    <button onclick="exportarExcel()" class="btn btn-success" style="margin-left:auto;">📥 Excel</button>
+                </div>
+
                 <div class="dash-kpi-grid">
                     <div class="kpi-card"><div class="kpi-title">Solicitações Abertas</div><div class="kpi-value" id="kpi-os-aberta">--</div></div>
                     <div class="kpi-card"><div class="kpi-title">Aguardando Aprovação</div><div class="kpi-value" id="kpi-aprovacao" style="color:var(--purple)">--</div></div>
-                    <div class="kpi-card"><div class="kpi-title">Valor Carteira</div><div class="kpi-value" id="kpi-valor-total" style="color:var(--success)">R$ 0,00</div></div>
+                    <div class="kpi-card"><div class="kpi-title">Valor Carteira (Filtro)</div><div class="kpi-value" id="kpi-valor-total" style="color:var(--success)">R$ 0,00</div></div>
                     <div class="kpi-card"><div class="kpi-title">Urgência Crítica</div><div class="kpi-value" id="kpi-urgencia-alta" style="color:var(--danger)">--</div></div>
                 </div>
                 <div class="charts-row">
-                    <div class="chart-box"><div class="chart-header">Status Geral</div><div class="chart-wrapper"><canvas id="chartStatus"></canvas></div></div>
-                    <div class="chart-box"><div class="chart-header">Envelhecimento (Aging)</div><div class="chart-wrapper"><canvas id="chartAging"></canvas></div></div>
-                    <div class="chart-box"><div class="chart-header">Por Urgência</div><div class="chart-wrapper"><canvas id="chartUrgencia"></canvas></div></div>
+                    <div class="chart-box"><div class="chart-header">Status</div><div class="chart-wrapper"><canvas id="chartStatus"></canvas></div></div>
+                    <div class="chart-box"><div class="chart-header">Aging (Dias)</div><div class="chart-wrapper"><canvas id="chartAging"></canvas></div></div>
+                    <div class="chart-box"><div class="chart-header">Urgência</div><div class="chart-wrapper"><canvas id="chartUrgencia"></canvas></div></div>
                 </div>
                 <div id="calendar-container"><div id="calendar"></div></div>
             </div>
 
             <div id="view-aprovacao" class="hidden">
-                <div style="background:white; padding:20px; border-radius:10px; border:1px solid var(--border); margin-bottom:20px;">
-                    <h3 style="margin-top:0; color:var(--primary)">🛡️ Central de Aprovação</h3>
-                    <p style="color:var(--text-muted); font-size:0.9rem;">Itens já cotados aguardando liberação financeira.</p>
+                <div style="background:white; padding:15px; border-radius:10px; border:1px solid var(--border); margin-bottom:20px;">
+                    <h3 style="margin-top:0; color:var(--primary)">🛡️ Aprovação</h3>
+                    <p style="color:var(--text-muted); font-size:0.85rem;">Role a tabela para ver as ações.</p>
                 </div>
                 <div class="table-container">
                     <table class="data-table">
-                        <thead><tr><th>Item</th><th>Código</th><th>Qtd</th><th>Fornecedor</th><th>Valor Unit.</th><th>Total</th><th>Detalhes</th><th style="text-align:center">Ação</th></tr></thead>
+                        <thead><tr><th>Item</th><th>Código</th><th>Qtd Sol.</th><th>Qtd Atend.</th><th>Total</th><th>Detalhes</th><th style="text-align:center">Ação</th></tr></thead>
                         <tbody id="tabela-aprovacao"></tbody>
                     </table>
                 </div>
@@ -178,14 +227,14 @@
             <div id="view-manutencao" class="hidden">
                 <div class="flex items-center gap-10" style="margin-bottom: 20px; flex-wrap: wrap;">
                     <button onclick="abrirModalCriacao()" class="btn btn-primary">+ Nova Solicitação</button>
-                    <input type="text" id="busca-manut" placeholder="Buscar OS..." class="form-control" style="width: 200px;" onkeyup="renderTabelaManutencao()">
+                    <input type="text" id="busca-manut" placeholder="Buscar..." class="form-control" style="width: 200px;" onkeyup="renderTabelaManutencao()">
                     <select id="filtro-manut-urg" class="form-control" style="width: 150px;" onchange="renderTabelaManutencao()">
                         <option value="">Todas Urgências</option><option value="Alta">Alta</option><option value="Média">Média</option><option value="Baixa">Baixa</option>
                     </select>
                 </div>
                 <div class="table-container">
                     <table class="data-table">
-                        <thead><tr><th>Nº OS</th><th>Título</th><th>Categoria</th><th>Urgência</th><th>Data</th><th>Ação</th></tr></thead>
+                        <thead><tr><th>Nº OS</th><th>Título</th><th>Status</th><th>Categoria</th><th>Urgência</th><th>Data</th><th>Ação</th></tr></thead>
                         <tbody id="tabela-manutencao"></tbody>
                     </table>
                 </div>
@@ -193,31 +242,19 @@
 
             <div id="view-compras" class="hidden">
                 <div class="flex items-center gap-10" style="margin-bottom: 20px; flex-wrap: wrap;">
-                    <input type="text" id="busca-compra" placeholder="Buscar Item..." class="form-control" style="width: 250px;" onkeyup="renderTabelaCompras()">
+                    <input type="text" id="busca-compra" placeholder="Buscar..." class="form-control" style="width: 250px;" onkeyup="renderTabelaCompras()">
                     <select id="filtro-compra-status" class="form-control" style="width: 200px;" onchange="renderTabelaCompras()">
                         <option value="">Todos Status</option>
                         <option value="Em cotação">Em cotação</option>
-                        <option value="Aguardando aprovação">Aprovação</option>
+                        <option value="Aguardando aprovação">Ag. Aprovação</option>
                         <option value="Aprovado">Aprovado</option>
-                        <option value="Aguardando entrega">Entrega</option>
+                        <option value="Aguardando entrega">Ag. Entrega</option>
                         <option value="Entregue">Entregue</option>
                     </select>
                 </div>
-                <div class="table-container" style="overflow-x: auto;">
+                <div class="table-container">
                     <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Status</th>
-                                <th>Descrição</th>
-                                <th>Código</th>
-                                <th>Qtd</th>
-                                <th>Val Unit. (R$)</th>
-                                <th>Total (R$)</th>
-                                <th>Fornecedor</th>
-                                <th>Previsão</th>
-                                <th>SC / Chat</th>
-                            </tr>
-                        </thead>
+                        <thead><tr><th width="120">Status</th><th>Descrição</th><th>Fornecedor</th><th>Total (R$)</th><th>Previsão</th><th width="100">Ação</th></tr></thead>
                         <tbody id="tabela-compras"></tbody>
                     </table>
                 </div>
@@ -241,7 +278,10 @@
                     <div class="w-full"><label class="form-label">Categoria</label><select id="inp-categoria" class="form-control"><option>Máquina parada</option><option>Segurança</option><option>Qualidade</option><option>Estoque</option></select></div>
                     <div class="w-full"><label class="form-label">Urgência</label><select id="inp-urgencia" class="form-control"><option value="Alta">Alta</option><option value="Média">Média</option><option value="Baixa">Baixa</option></select></div>
                 </div>
-                <div style="margin-bottom:15px;"><label class="form-label">Responsável *</label><select id="inp-responsavel" class="form-control"></select></div>
+                <div style="margin-bottom:15px;">
+                    <label class="form-label">Responsável *</label>
+                    <select id="inp-responsavel" class="form-control"><option value="">Carregando...</option></select>
+                </div>
                 <button onclick="salvarSolicitacao()" class="btn btn-primary w-full">Criar Solicitação</button>
             </div>
         </div>
@@ -255,35 +295,36 @@
                     <div class="flex gap-10">
                         <input type="text" id="edit-os" class="form-control" placeholder="OS Atlas" style="width:140px;">
                         <input type="text" id="edit-sc" class="form-control" placeholder="SC Pirâmide" style="width:140px;">
-                        <button onclick="atualizarCabecalho()" class="btn btn-success btn-sm">💾</button>
+                        <button onclick="atualizarCabecalho()" class="btn btn-success btn-sm">💾 Salvar Cabeçalho</button>
                     </div>
                 </div>
                 <button onclick="fecharModal('modal-detalhes')" class="btn btn-outline">Fechar ✖</button>
             </div>
             <div style="display: flex; flex: 1; overflow: hidden;">
-                <div style="flex: 2; padding: 20px; overflow-y: auto; border-right: 1px solid var(--border);">
+                <div style="flex: 2; padding: 20px; overflow-y: auto; border-right: 1px solid var(--border); background: #fdfdfd;">
                     <div class="flex justify-between items-center" style="margin-bottom: 15px;">
                         <h4 style="margin:0;">📦 Materiais</h4>
                         <div style="position:relative;">
-                            <button onclick="document.getElementById('input-excel').click()" class="btn btn-outline btn-sm">📗 Importar Excel</button>
+                            <button onclick="document.getElementById('input-excel').click()" class="btn btn-outline btn-sm">📗 Excel</button>
                             <input type="file" id="input-excel" accept=".xlsx,.csv" onchange="prepararImportacao(this)" class="hidden">
                         </div>
                     </div>
-                    <div style="background: #eff6ff; padding: 10px; border-radius: 8px; margin-bottom: 15px; border: 1px dashed #bfdbfe;">
-                        <div class="flex gap-10">
-                            <input type="text" id="mat-code" placeholder="Cód. Produto" class="form-control" style="flex:1;">
-                            <input type="text" id="mat-nome" placeholder="Descrição..." class="form-control" style="flex:3;">
-                            <input type="number" id="mat-qtd" placeholder="Qtd" class="form-control" style="flex:1;">
-                            <button onclick="adicionarMaterial()" class="btn btn-primary">+</button>
+                    
+                    <div style="background: #eff6ff; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px dashed #bfdbfe;">
+                        <div class="mat-row">
+                            <div class="col-span-3"><input type="text" id="mat-code" placeholder="Cód" class="form-control"></div>
+                            <div class="col-span-6"><input type="text" id="mat-nome" placeholder="Descrição" class="form-control"></div>
+                            <div class="col-span-3"><input type="number" id="mat-qtd" placeholder="Qtd" class="form-control"></div>
                         </div>
+                        <button onclick="adicionarMaterial()" class="btn btn-primary w-full" style="margin-top:5px;">+ Adicionar</button>
                     </div>
                     <div id="lista-materiais-modal"></div>
                 </div>
-                <div style="flex: 1; display: flex; flex-direction: column; background: #fcfcfc; min-width: 300px;">
+                <div style="flex: 1; display: flex; flex-direction: column; background: #fff; min-width: 300px; border-left:1px solid #e2e8f0;">
                     <div style="padding: 15px; border-bottom: 1px solid var(--border);">💬 Histórico</div>
                     <div id="chat-feed" style="flex:1; overflow-y: auto; padding: 15px;"></div>
-                    <div style="padding: 10px; border-top: 1px solid var(--border); background: white; display:flex; gap:5px;">
-                        <input type="text" id="chat-msg" class="form-control" placeholder="Mensagem..."><button onclick="enviarMensagem()" class="btn btn-primary">➤</button>
+                    <div style="padding: 10px; border-top: 1px solid var(--border); display:flex; gap:5px;">
+                        <input type="text" id="chat-msg" class="form-control" placeholder="Msg..."><button onclick="enviarMensagem()" class="btn btn-primary">➤</button>
                     </div>
                 </div>
             </div>
@@ -291,54 +332,49 @@
     </div>
 
     <div id="modal-import-map" class="modal-overlay" style="z-index: 2000;">
-        <div class="modal-box" style="max-width: 500px; height: auto;">
-            <div style="padding: 20px; border-bottom: 1px solid var(--border);">
-                <h3 style="margin:0; color:var(--primary);">🗺️ Importação de Materiais</h3>
-                <p style="font-size:0.9rem; color:var(--text-muted); margin:5px 0 0 0;">Identifique as colunas do seu Excel.</p>
-            </div>
-            <div style="padding: 25px;">
-                <div style="margin-bottom: 15px;">
-                    <label class="form-label" style="color:var(--accent);">Coluna: Código do Produto *</label>
-                    <select id="map-code" class="form-control"></select>
-                </div>
-                <div style="margin-bottom: 15px;">
-                    <label class="form-label" style="color:var(--accent);">Coluna: Descrição do Item *</label>
-                    <select id="map-desc" class="form-control"></select>
-                </div>
-                <div style="margin-bottom: 15px;">
-                    <label class="form-label" style="color:var(--accent);">Coluna: Quantidade *</label>
-                    <select id="map-qtd" class="form-control"></select>
-                </div>
-                <div class="flex gap-10">
-                    <button onclick="fecharModal('modal-import-map')" class="btn btn-outline w-full">Cancelar</button>
-                    <button onclick="confirmarImportacao()" class="btn btn-success w-full">Confirmar</button>
-                </div>
+        <div class="modal-box" style="max-width: 500px; height: auto; padding: 25px;">
+            <h3 style="margin-top:0;">🗺️ Importar Excel</h3>
+            <div style="margin-bottom:15px;"><label class="form-label">Código</label><select id="map-code" class="form-control"></select></div>
+            <div style="margin-bottom:15px;"><label class="form-label">Descrição *</label><select id="map-desc" class="form-control"></select></div>
+            <div style="margin-bottom:15px;"><label class="form-label">Qtd *</label><select id="map-qtd" class="form-control"></select></div>
+            <div class="flex gap-10">
+                <button onclick="fecharModal('modal-import-map')" class="btn btn-outline w-full">Cancelar</button>
+                <button onclick="confirmarImportacao()" class="btn btn-success w-full">Importar</button>
             </div>
         </div>
     </div>
 
     <script>
-        // CONFIG
+        // --- CONFIG ---
         let API_URL = '/';
-        if (window.location.protocol === 'file:') API_URL = 'http://127.0.0.1:8090/';
-        else if (['localhost','127.0.0.1'].includes(window.location.hostname)) API_URL = 'http://127.0.0.1:8090/';
+        if (window.location.protocol === 'file:' || ['localhost','127.0.0.1'].includes(window.location.hostname)) {
+            API_URL = 'http://127.0.0.1:8090/';
+        }
         
         const pb = new PocketBase(API_URL);
         pb.autoCancellation(false);
 
         const State = {
             acaoAtualId: null, usuarioAtual: null,
-            dadosAcoes: [], dadosMateriais: [],
-            chartStatusInst: null, chartAgingInst: null, chartUrgenciaInst: null, calendarInst: null,
-            cacheExcel: null
+            dadosAcoes: [], dadosMateriais: [], dadosLogs: [],
+            filtroData: { start: null, end: null },
+            chartStatusInst: null, chartAgingInst: null, chartUrgenciaInst: null, calendarInst: null, cacheExcel: null, filteredMats: []
         };
 
-        // HELPERS
-        async function safeRequest(p,t) {
-            if(t) showLoading(t);
-            try { const r=await p; return {success:true, data:r}; }
-            catch(e) { console.error(e); showToast(e.message||"Erro",'error'); return {success:false, error:e}; }
-            finally { if(t) hideLoading(); }
+        // --- INIT DATES ---
+        function initDates() {
+            const end = new Date(); const start = new Date(); start.setDate(start.getDate() - 30);
+            document.getElementById('dash-end').valueAsDate = end;
+            document.getElementById('dash-start').valueAsDate = start;
+            State.filtroData.start = start; State.filtroData.end = end;
+        }
+
+        // --- HELPERS ---
+        async function safeRequest(promise, txt) {
+            if(txt) showLoading(txt);
+            try { const r = await promise; return {success:true, data:r}; }
+            catch(err) { console.error("API Error:", err); showToast(err.status===0?"Servidor Offline":err.message, 'error'); return {success:false, error:err}; }
+            finally { if(txt) hideLoading(); }
         }
         function showLoading(t) { document.getElementById('loading-text').innerText=t; document.getElementById('loading-overlay').classList.remove('hidden'); }
         function hideLoading() { document.getElementById('loading-overlay').classList.add('hidden'); }
@@ -347,94 +383,119 @@
             el.innerHTML=`<span>${m}</span><span onclick="this.parentElement.remove()" style="cursor:pointer">&times;</span>`;
             c.appendChild(el); setTimeout(()=>el.classList.add('show'),10); setTimeout(()=>{el.classList.remove('show');setTimeout(()=>el.remove(),300)},4000);
         }
-
-        // --- SISTEMA DE LOG RASTREÁVEL ---
-        async function registrarHistorico(acaoId, msg, tipo='sistema') {
-            const nomeUsuario = State.usuarioAtual ? State.usuarioAtual.name : 'Sistema';
-            const msgCompleta = tipo === 'sistema' ? `${nomeUsuario} ${msg}` : msg;
-
-            await pb.collection('historico').create({
-                acao_vinculada: acaoId,
-                usuario: State.usuarioAtual.id,
-                mensagem: msgCompleta,
-                tipo: tipo
-            });
-            if(State.acaoAtualId === acaoId) renderChat(acaoId);
+        function getBadgeClass(s) {
+            if(!s) return 'badge';
+            if(s.includes('otação')) return 'st-cotacao';
+            if(s.includes('provação')) return 'st-aprovacao';
+            if(s==='Aprovado') return 'st-aprovado';
+            if(s.includes('ntrega')) return 'st-entrega';
+            if(s==='Entregue') return 'st-entregue';
+            return 'badge';
+        }
+        function getActionStatusClass(s) {
+            if(s==='Sem materiais') return 'sts-sem-mat';
+            if(s==='Em compras') return 'sts-em-compras';
+            if(s==='Concluído') return 'sts-finalizado';
+            return 'badge';
         }
 
-        // AUTH & PERMISSÕES
+        // --- AUTH ---
         async function fazerLogin() {
             const r = await safeRequest(pb.collection('users').authWithPassword(document.getElementById('email').value, document.getElementById('password').value), "Entrando...");
             if(r.success) checkAuth(); else document.getElementById('login-error-msg').style.display='block';
         }
         function logout() { pb.authStore.clear(); checkAuth(); }
-        function checkAuth() {
+        
+        async function checkAuth() {
             if(pb.authStore.isValid) {
                 document.getElementById('login-screen').classList.remove('active');
                 State.usuarioAtual = pb.authStore.model;
                 document.getElementById('user-display').innerText = State.usuarioAtual.name;
                 const perfil = State.usuarioAtual.perfil || 'admin';
                 
-                document.getElementById('menu-aprovacao').classList.add('hidden');
-                document.getElementById('menu-manutencao').classList.add('hidden');
-                document.getElementById('menu-compras').classList.add('hidden');
+                ['menu-aprovacao','menu-manutencao','menu-compras'].forEach(id => document.getElementById(id).classList.add('hidden'));
                 document.getElementById('menu-dashboard').classList.remove('hidden');
 
-                if(perfil === 'admin') {
-                    document.getElementById('menu-aprovacao').classList.remove('hidden');
-                    document.getElementById('menu-manutencao').classList.remove('hidden');
-                    document.getElementById('menu-compras').classList.remove('hidden');
-                    navegar('dashboard');
-                } 
-                else if(perfil === 'aprovador') {
-                    document.getElementById('menu-aprovacao').classList.remove('hidden');
-                    navegar('aprovacao');
-                }
-                else if(perfil === 'operador') {
-                    document.getElementById('menu-compras').classList.remove('hidden');
-                    navegar('compras');
-                } else {
-                    document.getElementById('menu-manutencao').classList.remove('hidden');
-                    navegar('dashboard');
-                }
-                carregarDadosAtuais(); iniciarRealtime(); carregarSelectUsuarios();
+                if(perfil === 'admin') { ['menu-aprovacao','menu-manutencao','menu-compras'].forEach(id => document.getElementById(id).classList.remove('hidden')); } 
+                else if(perfil === 'aprovador') { document.getElementById('menu-aprovacao').classList.remove('hidden'); navigating('aprovacao'); }
+                else if(perfil === 'operador') { document.getElementById('menu-compras').classList.remove('hidden'); navigating('compras'); }
+                else { document.getElementById('menu-manutencao').classList.remove('hidden'); navigating('dashboard'); }
+                
+                initDates();
+                await carregarSelectUsuarios();
+                carregarDadosAtuais(); 
+                iniciarRealtime(); 
             } else { document.getElementById('login-screen').classList.add('active'); }
         }
 
-        // DADOS
-        async function carregarDadosAtuais() {
-            const [r1, r2] = await Promise.all([
-                safeRequest(pb.collection('acoes').getFullList({sort:'-created'})),
-                safeRequest(pb.collection('materiais').getFullList({sort:'-created', expand:'acao_vinculada'}))
-            ]);
-            if(r1.success) State.dadosAcoes=r1.data; if(r2.success) State.dadosMateriais=r2.data;
-            const tela = document.querySelector('.menu-item.active').id.replace('menu-','');
-            // Só re-renderiza a tela atual se NÃO estivermos editando um campo na tabela de compras (para evitar perder foco)
-            if(document.activeElement.tagName !== 'INPUT' || tela !== 'compras') {
-                navegar(tela);
-            }
-        }
-        
-        function iniciarRealtime() {
-            pb.collection('materiais').subscribe('*', function(e) {
-                carregarDadosAtuais();
-                
-                // --- SISTEMA DE NOTIFICAÇÃO ---
-                if(e.action === 'create') {
-                    showToast("🔔 Novo item adicionado!");
-                    document.getElementById('notif-badge').style.display = 'flex';
-                    document.getElementById('notif-badge').innerText = '1'; 
-                }
-                if(e.action === 'update' && e.record.status_compra === 'Aprovado') {
-                    showToast("✅ Item Aprovado!");
-                }
-            });
-            
-            pb.collection('acoes').subscribe('*', ()=>carregarDadosAtuais());
-            pb.collection('historico').subscribe('*', (e)=>{if(State.acaoAtualId && e.record.acao_vinculada===State.acaoAtualId) renderChat(State.acaoAtualId)});
+        async function carregarSelectUsuarios() {
+            try {
+                const r = await pb.collection('users').getFullList();
+                const s = document.getElementById('inp-responsavel'); 
+                s.innerHTML = '<option value="">Selecione...</option>';
+                r.forEach(u => s.innerHTML += `<option value="${u.id}">${u.name}</option>`);
+            } catch(e) { console.warn(e); }
         }
 
-        // NAVEGAÇÃO
+        // --- LÓGICA DE STATUS AUTOMÁTICO ---
+        async function calcularStatusGeral(acaoId) {
+            // Busca materiais da ação
+            const mats = await pb.collection('materiais').getFullList({filter: `acao_vinculada="${acaoId}"`});
+            
+            let novoStatus = 'Sem materiais';
+            if (mats.length > 0) {
+                // Se todos entregues ou cancelados
+                const todosFim = mats.every(m => m.status_compra === 'Entregue' || m.status_compra === 'Cancelado');
+                if(todosFim) novoStatus = 'Concluído';
+                else novoStatus = 'Em compras';
+            }
+            
+            // Atualiza ação "mãe"
+            await pb.collection('acoes').update(acaoId, { status: novoStatus });
+        }
+
+        // --- CORE DATA ---
+        async function carregarDadosAtuais() {
+            const [r1, r2, r3] = await Promise.all([
+                safeRequest(pb.collection('acoes').getFullList({sort:'-created'})),
+                safeRequest(pb.collection('materiais').getFullList({sort:'-created', expand:'acao_vinculada'})),
+                safeRequest(pb.collection('historico').getList(1, 5, {sort:'-created'}))
+            ]);
+            
+            if(r1.success) State.dadosAcoes = r1.data;
+            if(r2.success) State.dadosMateriais = r2.data;
+            if(r3.success) { State.dadosLogs = r3.data.items; renderNotificacoes(); }
+
+            const tela = document.querySelector('.menu-item.active').id.replace('menu-','');
+            if(!document.getElementById('modal-detalhes').classList.contains('active')) navegar(tela);
+        }
+
+        function iniciarRealtime() {
+            pb.collection('materiais').subscribe('*', e => {
+                if(e.action === 'create') { showToast("🔔 Novo Material!"); document.getElementById('notif-badge').style.display = 'flex'; }
+                if(e.action === 'update' && e.record.status_compra==='Aprovado') showToast("✅ Aprovado!");
+                carregarDadosAtuais();
+            });
+            pb.collection('acoes').subscribe('*', () => carregarDadosAtuais());
+            pb.collection('historico').subscribe('*', () => carregarDadosAtuais());
+        }
+
+        // --- UI ---
+        function toggleNotifDropdown() {
+            const d = document.getElementById('notif-dropdown');
+            d.classList.toggle('active');
+            if(d.classList.contains('active')) document.getElementById('notif-badge').style.display='none';
+        }
+        function renderNotificacoes() {
+            const list = document.getElementById('notif-list'); list.innerHTML='';
+            State.dadosLogs.forEach(l => {
+                let msg = l.mensagem.replace(/sistema/gi,'').trim();
+                if(msg.length>40) msg = msg.substring(0,40)+'...';
+                const dh = new Date(l.created).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+                list.innerHTML += `<div class="notif-item">${msg}<small>${dh}</small></div>`;
+            });
+        }
+        function navigating(t) { navegar(t); }
         function navegar(t) {
             document.querySelectorAll('.menu-item').forEach(i=>i.classList.remove('active'));
             document.getElementById('menu-'+t).classList.add('active');
@@ -447,315 +508,200 @@
             if(t==='manutencao') renderTabelaManutencao();
             if(t==='compras') renderTabelaCompras();
         }
-        function toggleSidebar() { 
-            const sb=document.getElementById('sidebar'); sb.classList.toggle('active'); 
-            document.querySelector('.menu-overlay').style.display = sb.classList.contains('active')?'block':'none';
-        }
+        function toggleSidebar() { const sb=document.getElementById('sidebar'); sb.classList.toggle('active'); document.querySelector('.menu-overlay').style.display = sb.classList.contains('active')?'block':'none'; }
 
         // --- DASHBOARD ---
+        function aplicarFiltroDashboard() {
+            State.filtroData.start = new Date(document.getElementById('dash-start').value);
+            State.filtroData.end = new Date(document.getElementById('dash-end').value);
+            renderDashboard();
+        }
         function renderDashboard() {
-            const mat=State.dadosMateriais; const ac=State.dadosAcoes;
-            document.getElementById('kpi-os-aberta').innerText = ac.filter(a=>a.status!=='Concluído').length;
-            document.getElementById('kpi-aprovacao').innerText = mat.filter(m=>m.status_compra==='Aguardando aprovação').length;
-            const val = mat.reduce((acc,m)=>acc+((m.valor||0)*(m.quantidade||0)),0);
-            document.getElementById('kpi-valor-total').innerText = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(val);
-            document.getElementById('kpi-urgencia-alta').innerText = mat.filter(m=>m.urgencia_material==='Alta' && m.status_compra!=='Entregue').length;
+            const dStart = new Date(State.filtroData.start);
+            const dEnd = new Date(State.filtroData.end); 
+            dStart.setHours(0,0,0,0);
+            dEnd.setHours(23,59,59,999);
 
-            const stC={}; mat.forEach(m=>stC[m.status_compra]=(stC[m.status_compra]||0)+1);
+            const matF = State.dadosMateriais.filter(m => {
+                const dt = new Date(m.created);
+                return dt >= dStart && dt <= dEnd;
+            });
+            State.filteredMats = matF;
+
+            document.getElementById('kpi-os-aberta').innerText = State.dadosAcoes.filter(a=>a.status!=='Concluído').length;
+            document.getElementById('kpi-aprovacao').innerText = matF.filter(m=>m.status_compra==='Aguardando aprovação').length;
+            
+            const val = matF.reduce((a,m)=>a+((m.valor||0)*(m.qtd_atendida||m.quantidade||0)),0);
+            document.getElementById('kpi-valor-total').innerText = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(val);
+            
+            document.getElementById('kpi-urgencia-alta').innerText = matF.filter(m=>m.urgencia_material==='Alta' && m.status_compra!=='Entregue').length;
+
+            const stC={}; matF.forEach(m=>stC[m.status_compra]=(stC[m.status_compra]||0)+1);
             if(State.chartStatusInst) State.chartStatusInst.destroy();
             State.chartStatusInst=new Chart(document.getElementById('chartStatus'),{type:'doughnut',data:{labels:Object.keys(stC),datasets:[{data:Object.values(stC),backgroundColor:['#f59e0b','#3b82f6','#10b981','#ef4444','#7c3aed']}]},options:{responsive:true,maintainAspectRatio:false}});
 
-            const aging={'0-7 Dias':0,'7-15 Dias':0,'+15 Dias':0};
-            mat.forEach(m=>{ if(!['Entregue','Cancelado'].includes(m.status_compra)){ const d=Math.ceil(Math.abs(new Date()-new Date(m.created))/(86400000)); if(d<=7)aging['0-7 Dias']++; else if(d<=15)aging['7-15 Dias']++; else aging['+15 Dias']++; }});
+            const ag={'0-7d':0,'7-15d':0,'+15d':0};
+            matF.forEach(m=>{ if(!['Entregue','Cancelado'].includes(m.status_compra)){ const d=Math.ceil(Math.abs(new Date()-new Date(m.created))/(86400000)); if(d<=7)ag['0-7d']++; else if(d<=15)ag['7-15d']++; else ag['+15d']++; }});
             if(State.chartAgingInst) State.chartAgingInst.destroy();
-            State.chartAgingInst=new Chart(document.getElementById('chartAging'),{type:'bar',data:{labels:Object.keys(aging),datasets:[{label:'Itens',data:Object.values(aging),backgroundColor:'#6366f1'}]},options:{responsive:true,maintainAspectRatio:false}});
+            State.chartAgingInst=new Chart(document.getElementById('chartAging'),{type:'bar',data:{labels:Object.keys(ag),datasets:[{label:'Pendentes',data:Object.values(ag),backgroundColor:'#6366f1'}]},options:{responsive:true,maintainAspectRatio:false}});
 
-            const urgC={'Alta':0,'Média':0,'Baixa':0}; mat.forEach(m=>{if(!['Entregue','Cancelado'].includes(m.status_compra)) urgC[m.urgencia_material]=(urgC[m.urgencia_material]||0)+1;});
+            const ur={'Alta':0,'Média':0,'Baixa':0}; matF.forEach(m=>{if(!['Entregue','Cancelado'].includes(m.status_compra)) ur[m.urgencia_material]=(ur[m.urgencia_material]||0)+1;});
             if(State.chartUrgenciaInst) State.chartUrgenciaInst.destroy();
-            State.chartUrgenciaInst=new Chart(document.getElementById('chartUrgencia'),{type:'bar',data:{labels:Object.keys(urgC),datasets:[{data:Object.values(urgC),backgroundColor:['#ef4444','#f59e0b','#10b981']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+            State.chartUrgenciaInst=new Chart(document.getElementById('chartUrgencia'),{type:'bar',data:{labels:Object.keys(ur),datasets:[{data:Object.values(ur),backgroundColor:['#ef4444','#f59e0b','#10b981']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}});
 
-            const evs = mat.filter(m=>m.data_entrega && !['Entregue','Cancelado'].includes(m.status_compra)).map(m=>({title:`${m.descricao}`,start:m.data_entrega.split('T')[0],backgroundColor:'#2563eb'}));
-            setTimeout(()=>{
-                const el=document.getElementById('calendar');
-                if(!State.calendarInst) { State.calendarInst=new FullCalendar.Calendar(el,{initialView:'dayGridMonth',locale:'pt-br',height:'100%',events:evs}); State.calendarInst.render(); }
-                else { State.calendarInst.removeAllEvents(); State.calendarInst.addEventSource(evs); State.calendarInst.render(); }
-            },100);
+            const evs = matF.filter(m=>m.data_entrega && !['Entregue','Cancelado'].includes(m.status_compra)).map(m=>({title:m.descricao,start:m.data_entrega.split('T')[0],backgroundColor:'#2563eb'}));
+            setTimeout(()=>{ if(!State.calendarInst) { State.calendarInst=new FullCalendar.Calendar(document.getElementById('calendar'),{initialView:'dayGridMonth',locale:'pt-br',height:'100%',events:evs}); State.calendarInst.render(); } else { State.calendarInst.removeAllEvents(); State.calendarInst.addEventSource(evs); State.calendarInst.render(); } },100);
         }
 
-        // --- APROVAÇÃO ---
-        function renderTabelaAprovacao() {
-            const tb = document.getElementById('tabela-aprovacao'); tb.innerHTML = '';
-            const pendentes = State.dadosMateriais.filter(m => m.status_compra === 'Aguardando aprovação');
-            
-            if(pendentes.length === 0) { tb.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px; color:#94a3b8;">Nenhum item aguardando aprovação.</td></tr>'; return; }
-
-            pendentes.forEach(m => {
-                const total = (m.valor || 0) * (m.quantidade || 0);
-                const acao = m.expand?.acao_vinculada;
-                const contexto = acao ? `<b>OS:</b> ${acao.ordem_servico || 'S/N'}<br><small>${acao.categoria}</small>` : 'Sem vínculo';
-                
-                tb.innerHTML += `
-                    <tr>
-                        <td><b>${m.descricao}</b></td>
-                        <td>${m.codigo_item || '-'}</td>
-                        <td>${m.quantidade}</td>
-                        <td>${m.fornecedor || '-'}</td>
-                        <td>R$ ${(m.valor||0).toFixed(2)}</td>
-                        <td><b>R$ ${total.toFixed(2)}</b></td>
-                        <td><button class="btn btn-sm btn-outline" onclick="abrirModalDetalhes('${m.acao_vinculada}')">🔍 Detalhes</button></td>
-                        <td style="text-align:center;">
-                            <button class="btn btn-sm btn-success" onclick="decidirAprovacao('${m.id}', 'Aprovado')" title="Aprovar">✅</button>
-                            <button class="btn btn-sm btn-outline" onclick="decidirAprovacao('${m.id}', 'Em cotação')" title="Reprovar">↩️</button>
-                        </td>
-                    </tr>
-                `;
+        // --- EXPORT ---
+        function exportarExcel() {
+            const data = State.filteredMats.map(m => {
+                const ac = m.expand?.acao_vinculada || {};
+                return {
+                    "Data Criação": new Date(m.created).toLocaleDateString(), "OS": ac.ordem_servico||'', "Item": m.descricao,
+                    "Qtd Orig": m.quantidade, "Qtd Atend": m.qtd_atendida||m.quantidade, "Valor Unit": m.valor, 
+                    "Total": (m.valor||0)*(m.qtd_atendida||m.quantidade), "Status": m.status_compra, "Fornecedor": m.fornecedor
+                };
             });
-        }
-        async function decidirAprovacao(id, status) {
-            if(!confirm(`Confirma alteração para: ${status}?`)) return;
-            await safeRequest(pb.collection('materiais').update(id, { status_compra: status }));
-            const item = State.dadosMateriais.find(m=>m.id===id);
-            await registrarHistorico(item.acao_vinculada, `definiu o status do item "${item.descricao}" como: ${status}.`);
-            showToast(`Status alterado!`);
+            const ws = XLSX.utils.json_to_sheet(data); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Filtrado"); XLSX.writeFile(wb,"PCM_Flow_Filtrado.xlsx");
         }
 
         // --- TABELAS ---
+        function renderTabelaAprovacao() {
+            const tb = document.getElementById('tabela-aprovacao'); tb.innerHTML='';
+            const data = State.dadosMateriais.filter(m => m.status_compra === 'Aguardando aprovação');
+            if(data.length === 0) { tb.innerHTML='<tr><td colspan="7" style="text-align:center; padding:20px;">Nada pendente.</td></tr>'; return; }
+            data.forEach(m => {
+                const q = m.qtd_atendida || m.quantidade || 0; const t = (m.valor||0)*q;
+                const ctx = m.expand?.acao_vinculada ? `OS: ${m.expand.acao_vinculada.ordem_servico}` : '-';
+                tb.innerHTML += `<tr><td><b>${m.descricao}</b></td><td>${m.codigo_item||'-'}</td><td>${m.quantidade}</td><td>${q}</td><td>R$ ${t.toFixed(2)}</td><td>${ctx}</td><td style="text-align:center"><button class="btn btn-sm btn-outline" onclick="abrirModalDetalhes('${m.acao_vinculada}')">🔍</button><div style="margin-top:5px"><button class="btn btn-sm btn-success" onclick="decidir('${m.id}','Aprovado')">✅</button><button class="btn btn-sm btn-outline" onclick="decidir('${m.id}','Em cotação')">↩️</button></div></td></tr>`;
+            });
+        }
+        async function decidir(id, s) { if(!confirm(`Confirma ${s}?`))return; await safeRequest(pb.collection('materiais').update(id,{status_compra:s})); const i=State.dadosMateriais.find(x=>x.id===id); await registrarHistorico(i.acao_vinculada, `definiu status: ${s}`); await calcularStatusGeral(i.acao_vinculada); showToast('Feito!'); }
+
         function renderTabelaManutencao() {
             const tb=document.getElementById('tabela-manutencao'); tb.innerHTML='';
             const txt=document.getElementById('busca-manut').value.toLowerCase(); const urg=document.getElementById('filtro-manut-urg').value;
             State.dadosAcoes.filter(a=>(a.titulo+a.ordem_servico).toLowerCase().includes(txt) && (!urg || a.urgencia===urg)).forEach(a=>{
-                tb.innerHTML+=`<tr><td>${a.ordem_servico||'-'}</td><td><b>${a.titulo}</b></td><td>${a.categoria}</td><td><span class="badge bd-${a.urgencia}">${a.urgencia}</span></td><td>${new Date(a.created).toLocaleDateString()}</td><td><button class="btn btn-sm btn-outline" onclick="abrirModalDetalhes('${a.id}')">Ver</button></td></tr>`;
+                // STATUS AUTOMATICO VISUAL
+                let badgeStatus = getActionStatusClass(a.status);
+                tb.innerHTML+=`<tr><td>${a.ordem_servico||'-'}</td><td><b>${a.titulo}</b></td><td><span class="badge ${badgeStatus}">${a.status||'Aberto'}</span></td><td>${a.categoria}</td><td><span class="badge bd-${a.urgencia}">${a.urgencia}</span></td><td>${new Date(a.created).toLocaleDateString()}</td><td><button class="btn btn-sm btn-outline" onclick="abrirModalDetalhes('${a.id}')">Ver</button></td></tr>`;
             });
         }
-        
-        function renderTabelaCompras() {
-            // Só renderiza se a tabela estiver vazia OU se não tiver input focado (para não perder o que digita)
-            const tb=document.getElementById('tabela-compras'); 
-            if(document.activeElement.tagName === 'INPUT' && tb.innerHTML.trim() !== "") return;
 
-            tb.innerHTML='';
+        function renderTabelaCompras() {
+            const tb=document.getElementById('tabela-compras'); tb.innerHTML='';
             const txt=document.getElementById('busca-compra').value.toLowerCase(); const st=document.getElementById('filtro-compra-status').value;
             State.dadosMateriais.filter(m=>(m.descricao+(m.expand?.acao_vinculada?.ordem_servico||'')).toLowerCase().includes(txt) && (!st || m.status_compra===st)).forEach(m=>{
-                let cor = '#334155';
-                if(m.status_compra==='Aprovado') cor = 'var(--purple)';
-                if(m.status_compra==='Aguardando aprovação') cor = '#f59e0b';
-                if(m.status_compra==='Entregue') cor = 'var(--success)';
-                
-                const selectHTML = `<select onchange="upSt('${m.id}',this.value)" class="form-control" style="color:${cor}; border-color:${cor}; font-weight:600; width:130px;">
-                    <option value="Em cotação" ${m.status_compra=='Em cotação'?'selected':''}>Em cotação</option>
-                    <option value="Aguardando aprovação" ${m.status_compra=='Aguardando aprovação'?'selected':''}>Aguardando aprovação</option>
-                    <option value="Aprovado" ${m.status_compra=='Aprovado'?'selected':''}>Aprovado</option>
-                    <option value="Aguardando entrega" ${m.status_compra=='Aguardando entrega'?'selected':''}>Aguardando entrega</option>
-                    <option value="Entregue" ${m.status_compra=='Entregue'?'selected':''}>Entregue</option>
-                    <option value="Cancelado" ${m.status_compra=='Cancelado'?'selected':''}>Cancelado</option>
-                </select>`;
-
-                const total = (m.valor || 0) * (m.quantidade || 0);
-                
-                // Fix Date Display - Verifica se existe data e pega só a parte YYYY-MM-DD
-                let dateVal = '';
-                if(m.data_entrega && m.data_entrega.length >= 10) {
-                    dateVal = m.data_entrega.substring(0, 10);
-                }
-
-                tb.innerHTML+=`
-                    <tr>
-                        <td>${selectHTML}</td>
-                        <td><b>${m.descricao}</b></td>
-                        <td><small>${m.codigo_item||'-'}</small></td>
-                        <td>${m.quantidade}</td>
-                        <td><input type="number" class="form-control w-24" placeholder="R$ 0.00" value="${m.valor||''}" onblur="upMat('${m.id}','valor',this.value)" style="width:100px;"></td>
-                        <td><span id="total-${m.id}" style="font-weight:bold; color:var(--primary)">R$ ${total.toFixed(2)}</span></td>
-                        <td><input type="text" class="form-control" placeholder="Fornecedor" value="${m.fornecedor||''}" onblur="upMat('${m.id}','fornecedor',this.value)" style="width:120px;"></td>
-                        <td><input type="date" class="form-control" value="${dateVal}" onblur="upMat('${m.id}','data_entrega',this.value)" style="width:130px;"></td>
-                        <td><button class="btn btn-sm btn-outline" onclick="abrirModalDetalhes('${m.acao_vinculada}')">SC/Chat</button></td>
-                    </tr>`;
+                const q = m.qtd_atendida || m.quantidade || 0; const t = (m.valor||0)*q;
+                let dt = m.data_entrega ? new Date(m.data_entrega).toLocaleDateString() : '-';
+                tb.innerHTML+=`<tr><td><span class="badge ${getBadgeClass(m.status_compra)}">${m.status_compra}</span></td><td><b>${m.descricao}</b><br><small>${m.codigo_item||''}</small></td><td>${m.fornecedor||'-'}</td><td>R$ ${t.toFixed(2)}</td><td>${dt}</td><td><button class="btn btn-sm btn-outline" onclick="abrirModalDetalhes('${m.acao_vinculada}')">📝 Detalhar</button></td></tr>`;
             });
         }
 
-        async function upSt(id,v) { 
-            await safeRequest(pb.collection('materiais').update(id,{status_compra:v})); 
-            const item = State.dadosMateriais.find(m=>m.id===id);
-            await registrarHistorico(item.acao_vinculada, `alterou o status do item "${item.descricao}" para: ${v}.`);
-            showToast('Atualizado'); 
-        }
-
-        async function upMat(id,k,v) { 
-            // CORREÇÃO CRÍTICA: Atualiza Localmente PRIMEIRO
-            const idx = State.dadosMateriais.findIndex(m=>m.id===id);
-            if(idx >= 0) { State.dadosMateriais[idx][k] = v; }
-
-            // Salva no Banco sem bloquear a UI
-            const d={}; d[k]=v; if(k=='data_entrega' && !v) d[k]=null; 
-            pb.collection('materiais').update(id,d); 
-            
-            // Log Inteligente
-            if(k === 'valor' || k === 'fornecedor' || k === 'data_entrega') {
-                const item = State.dadosMateriais.find(m=>m.id===id);
-                let campoNome = k === 'valor' ? 'valor unitário' : (k === 'fornecedor' ? 'fornecedor' : 'data');
-                registrarHistorico(item.acao_vinculada, `atualizou ${campoNome} do item "${item.descricao}" para: ${v}`);
-                
-                // Atualiza visualmente o Total se mudou o valor (sem recarregar tabela)
-                if(k === 'valor') {
-                    const novoTotal = (parseFloat(v) || 0) * (item.quantidade || 0);
-                    const elTotal = document.getElementById(`total-${id}`);
-                    if(elTotal) elTotal.innerText = `R$ ${novoTotal.toFixed(2)}`;
-                }
-            }
-        }
-
-        // --- MANUTENÇÃO ---
-        async function carregarSelectUsuarios() {
-            const r=await safeRequest(pb.collection('users').getFullList());
-            if(r.success) { const s=document.getElementById('inp-responsavel'); s.innerHTML=''; r.data.forEach(u=>s.innerHTML+=`<option value="${u.id}">${u.name}</option>`); }
-        }
-        async function salvarSolicitacao() {
-            const t=document.getElementById('inp-titulo').value; const r=document.getElementById('inp-responsavel').value; const sc=document.getElementById('inp-sc').value;
-            if(!t || !r) return showToast('Preencha campos obrigatórios','error');
-            const d={ titulo:t, descricao:document.getElementById('inp-descricao').value, ordem_servico:document.getElementById('inp-os').value, numero_sc: sc?parseInt(sc):null, categoria:document.getElementById('inp-categoria').value, urgencia:document.getElementById('inp-urgencia').value, responsavel:r, status:'Aguardando materiais' };
-            const res=await safeRequest(pb.collection('acoes').create(d),"Salvando...");
-            if(res.success) { 
-                await registrarHistorico(res.data.id, `criou a solicitação "${t}".`);
-                showToast('Criado!'); fecharModal('modal-criacao'); carregarDadosAtuais(); 
-                document.getElementById('inp-titulo').value=''; document.getElementById('inp-descricao').value=''; document.getElementById('inp-os').value=''; document.getElementById('inp-sc').value='';
-            }
-        }
-
-        // --- DETALHES ---
+        // --- MODAL ---
         async function abrirModalDetalhes(id) {
             State.acaoAtualId=id; document.getElementById('modal-detalhes').classList.add('active');
             const r=await safeRequest(pb.collection('acoes').getOne(id));
             if(r.success) { document.getElementById('edit-titulo').value=r.data.titulo; document.getElementById('edit-os').value=r.data.ordem_servico; document.getElementById('edit-sc').value=r.data.numero_sc; }
-            renderMateriais(id); renderChat(id);
+            renderMateriaisModal(id); renderChat(id);
         }
-        async function atualizarCabecalho() { 
-            await safeRequest(pb.collection('acoes').update(State.acaoAtualId,{titulo:document.getElementById('edit-titulo').value,ordem_servico:document.getElementById('edit-os').value,numero_sc:document.getElementById('edit-sc').value})); 
-            await registrarHistorico(State.acaoAtualId, `atualizou o cabeçalho da solicitação.`);
-            showToast('Salvo'); 
-        }
+        async function atualizarCabecalho() { await safeRequest(pb.collection('acoes').update(State.acaoAtualId,{titulo:document.getElementById('edit-titulo').value,ordem_servico:document.getElementById('edit-os').value,numero_sc:document.getElementById('edit-sc').value})); await registrarHistorico(State.acaoAtualId, `atualizou cabeçalho.`); showToast('Salvo'); }
         
-        async function renderMateriais(id) {
+        async function renderMateriaisModal(id) {
             const div=document.getElementById('lista-materiais-modal'); div.innerHTML='...';
             const r=await safeRequest(pb.collection('materiais').getFullList({filter:`acao_vinculada="${id}"`,sort:'-created'}));
             div.innerHTML='';
             if(r.success) r.data.forEach(m=>{
-                const bg = m.status_compra==='Aprovado' ? '#f3e8ff' : (m.status_compra==='Entregue'?'#f0fdf4':'white');
-                let dateVal = m.data_entrega && m.data_entrega.length >= 10 ? m.data_entrega.substring(0, 10) : '';
-
-                div.innerHTML+=`<div style="background:${bg}; border:1px solid #e2e8f0; padding:10px; margin-bottom:8px; border-radius:6px;">
-                    <div class="flex justify-between">
-                        <b>${m.descricao} (${m.quantidade})</b>
-                        <span class="badge" style="background:#e2e8f0">${m.status_compra}</span>
+                const qo=m.quantidade||0; const qa=m.qtd_atendida||qo; const saldo=qo-qa; const tot=(m.valor||0)*qa;
+                const dt = m.data_entrega && m.data_entrega.length>=10 ? m.data_entrega.substring(0,10) : '';
+                
+                div.innerHTML += `<div class="mat-card">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                        <span class="badge ${getBadgeClass(m.status_compra)}">${m.status_compra}</span>
+                        <small style="color:${saldo>0?'red':'green'}">Saldo: ${saldo}</small>
                     </div>
-                    <div style="font-size:0.8rem; color:var(--secondary); margin-top:2px;">Cód Produto: <b>${m.codigo_item || 'N/A'}</b></div>
-                    <div class="flex gap-10" style="margin-top:5px;">
-                        <input class="form-control" style="padding:4px" placeholder="Fornecedor" value="${m.fornecedor||''}" onblur="upMat('${m.id}','fornecedor',this.value)">
-                        <input class="form-control" style="padding:4px" type="number" placeholder="Valor R$" value="${m.valor||''}" onblur="upMat('${m.id}','valor',this.value)">
-                        <input class="form-control" style="padding:4px" type="date" value="${dateVal}" onblur="upMat('${m.id}','data_entrega',this.value)">
+                    <div class="mat-row"><div class="col-span-12"><label class="form-label">Descrição</label><input type="text" class="form-control" value="${m.descricao}" onblur="upMat('${m.id}','descricao',this.value)"></div></div>
+                    <div class="mat-row">
+                        <div class="col-span-3"><label class="form-label">Cód</label><input type="text" class="form-control" value="${m.codigo_item||''}" onblur="upMat('${m.id}','codigo_item',this.value)"></div>
+                        <div class="col-span-3"><label class="form-label">Qtd Sol.</label><input type="number" class="form-control" value="${qo}" onblur="upMat('${m.id}','quantidade',this.value)"></div>
+                        <div class="col-span-3"><label class="form-label">Qtd Atend.</label><input type="number" class="form-control" value="${qa}" onblur="upMat('${m.id}','qtd_atendida',this.value)"></div>
+                        <div class="col-span-3"><label class="form-label">Status</label><select class="form-control" onchange="upMat('${m.id}','status_compra',this.value)">
+                            <option value="Em cotação" ${m.status_compra=='Em cotação'?'selected':''}>Cotação</option>
+                            <option value="Aguardando aprovação" ${m.status_compra=='Aguardando aprovação'?'selected':''}>Ag. Aprovação</option>
+                            <option value="Aprovado" ${m.status_compra=='Aprovado'?'selected':''}>Aprovado</option>
+                            <option value="Entregue" ${m.status_compra=='Entregue'?'selected':''}>Entregue</option>
+                            <option value="Cancelado" ${m.status_compra=='Cancelado'?'selected':''}>Cancelado</option>
+                        </select></div>
+                    </div>
+                    <div class="mat-row">
+                        <div class="col-span-4"><label class="form-label">Forn.</label><input type="text" class="form-control" value="${m.fornecedor||''}" onblur="upMat('${m.id}','fornecedor',this.value)"></div>
+                        <div class="col-span-3"><label class="form-label">Unit.</label><input type="number" class="form-control" value="${m.valor||''}" onblur="upMat('${m.id}','valor',this.value)"></div>
+                        <div class="col-span-2"><label class="form-label">Total</label><div style="font-weight:bold; color:var(--primary); padding-top:8px;">R$ ${tot.toFixed(2)}</div></div>
+                        <div class="col-span-3"><label class="form-label">Data</label><input type="date" class="form-control" value="${dt}" onblur="upMat('${m.id}','data_entrega',this.value)"></div>
                     </div>
                 </div>`;
             });
         }
-        async function adicionarMaterial() {
-            const n=document.getElementById('mat-nome').value; 
-            const cod=document.getElementById('mat-code').value; 
-            if(!n) return;
-            await safeRequest(pb.collection('materiais').create({
-                acao_vinculada:State.acaoAtualId, 
-                descricao:n, 
-                codigo_item: cod, 
-                quantidade:document.getElementById('mat-qtd').value||1, 
-                urgencia_material:'Média', 
-                status_compra:'Em cotação' 
-            }));
-            await registrarHistorico(State.acaoAtualId, `adicionou item manual: ${n}`);
-            document.getElementById('mat-nome').value=''; document.getElementById('mat-code').value='';
-            renderMateriais(State.acaoAtualId);
-        }
-
-        // --- IMPORTAÇÃO EXCEL ---
-        function prepararImportacao(input) {
-            if(!input.files[0]) return;
-            const r = new FileReader();
-            r.onload = (e) => {
-                const wb = XLSX.read(e.target.result, {type:'array'});
-                const dados = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1});
-                if(dados.length < 1) { showToast("Arquivo vazio", "error"); input.value=''; return; }
-                State.cacheExcel = dados;
-                
-                const cabecalho = dados[0];
-                const selects = ['map-desc', 'map-qtd', 'map-code'];
-                selects.forEach(id => {
-                    const sel = document.getElementById(id); sel.innerHTML = '<option value="">-- Selecione --</option>';
-                    cabecalho.forEach((col, idx) => { sel.innerHTML += `<option value="${idx}">${col} (Col ${idx+1})</option>`; });
-                });
-
-                cabecalho.forEach((col, idx) => {
-                    const c = String(col).toLowerCase();
-                    if(c.includes('desc') || c.includes('item')) document.getElementById('map-desc').value = idx;
-                    if(c.includes('qtd') || c.includes('quant')) document.getElementById('map-qtd').value = idx;
-                    if(c.includes('cod') || c.includes('prod')) document.getElementById('map-code').value = idx;
-                });
-
-                document.getElementById('modal-import-map').classList.add('active'); input.value = '';
-            };
-            r.readAsArrayBuffer(input.files[0]);
-        }
-        async function confirmarImportacao() {
-            const iDesc = document.getElementById('map-desc').value;
-            const iQtd = document.getElementById('map-qtd').value;
-            const iCode = document.getElementById('map-code').value; 
-
-            if(iDesc === "" || iQtd === "") return showToast("Descrição e Quantidade são obrigatórios.", "error");
-
-            const dados = State.cacheExcel;
-            let count = 0;
-            showLoading("Importando...");
-            try {
-                for(let i=1; i < dados.length; i++) {
-                    const row = dados[i];
-                    if(row[iDesc]) {
-                        await pb.collection('materiais').create({
-                            acao_vinculada: State.acaoAtualId,
-                            descricao: row[iDesc],
-                            quantidade: row[iQtd] || 1,
-                            codigo_item: iCode !== "" ? (row[iCode] || "") : "", 
-                            num_af: "", 
-                            urgencia_material: 'Média',
-                            status_compra: 'Em cotação' 
-                        });
-                        count++;
-                    }
-                }
-                await registrarHistorico(State.acaoAtualId, `importou ${count} itens via Excel.`);
-                showToast(`${count} itens importados!`); fecharModal('modal-import-map'); renderMateriais(State.acaoAtualId);
-            } catch(e) { console.error(e); showToast("Erro na importação.", "error"); } finally { hideLoading(); }
-        }
-
-        // --- CHAT & LOGS (COM DATA E HORA) ---
-        async function renderChat(id) {
-            const div=document.getElementById('chat-feed'); 
-            const r=await safeRequest(pb.collection('historico').getFullList({filter:`acao_vinculada="${id}"`,sort:'created',expand:'usuario'}));
-            if(r.success) { 
-                div.innerHTML=''; 
-                r.data.forEach(h=>{ 
-                    const dataHora = new Date(h.created).toLocaleString('pt-BR', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
-                    
-                    if(h.tipo === 'sistema') {
-                        div.innerHTML += `<div class="chat-log-sys">${h.mensagem} - <small>${dataHora}</small></div>`;
-                    } else {
-                        const me=h.expand?.usuario?.id===State.usuarioAtual.id; 
-                        div.innerHTML+=`
-                        <div style="align-self:${me?'flex-end':'flex-start'};background:${me?'#dbeafe':'#f1f5f9'};padding:8px;border-radius:8px;max-width:85%;margin-bottom:5px;">
-                            <b>${h.expand?.usuario?.name||'Sys'}:</b> ${h.mensagem}
-                            <span class="chat-time">${dataHora}</span>
-                        </div>`; 
-                    }
-                }); 
-                div.scrollTop=div.scrollHeight; 
+        async function upMat(id,k,v) { 
+            const d={}; d[k]=v; if(k=='data_entrega' && !v) d[k]=null; await pb.collection('materiais').update(id,d);
+            if(['status_compra','valor','qtd_atendida'].includes(k)) { 
+                const m=await pb.collection('materiais').getOne(id); 
+                await registrarHistorico(m.acao_vinculada, `alterou ${k} para ${v}`); 
+                await calcularStatusGeral(m.acao_vinculada); // RECALCULA STATUS MÃE
             }
+            renderMateriaisModal(State.acaoAtualId);
+        }
+        
+        // --- CHAT & ACTIONS ---
+        async function renderChat(id) {
+            const d=document.getElementById('chat-feed'); const r=await safeRequest(pb.collection('historico').getFullList({filter:`acao_vinculada="${id}"`,sort:'created',expand:'usuario'}));
+            d.innerHTML='';
+            if(r.success) r.data.forEach(h=>{
+                const me=h.expand?.usuario?.id===State.usuarioAtual.id;
+                const dh=new Date(h.created).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+                if(h.tipo==='sistema') d.innerHTML+=`<div class="chat-log-sys">${h.mensagem} <small>${dh}</small></div>`;
+                else d.innerHTML+=`<div style="align-self:${me?'flex-end':'flex-start'};background:${me?'#dbeafe':'#f1f5f9'};padding:8px;border-radius:8px;max-width:85%;margin-bottom:5px;"><b>${h.expand?.usuario?.name||'Sys'}:</b> ${h.mensagem} <span class="chat-time">${dh}</span></div>`;
+            });
+            d.scrollTop=d.scrollHeight;
         }
         async function enviarMensagem() { const m=document.getElementById('chat-msg').value; if(!m)return; await safeRequest(pb.collection('historico').create({acao_vinculada:State.acaoAtualId,usuario:State.usuarioAtual.id,mensagem:m,tipo:'comentario'})); document.getElementById('chat-msg').value=''; renderChat(State.acaoAtualId); }
+        
+        async function salvarSolicitacao() {
+            const t=document.getElementById('inp-titulo').value; const r=document.getElementById('inp-responsavel').value; 
+            if(!t || !r) return showToast('Preencha título e responsável','error');
+            const res=await safeRequest(pb.collection('acoes').create({titulo:t, descricao:document.getElementById('inp-descricao').value, ordem_servico:document.getElementById('inp-os').value, numero_sc: document.getElementById('inp-sc').value, categoria:document.getElementById('inp-categoria').value, urgencia:document.getElementById('inp-urgencia').value, responsavel:r, status:'Sem materiais'}),"Salvando...");
+            if(res.success) { 
+                await registrarHistorico(res.data.id, `criou solicitação.`); 
+                showToast('Criado!'); 
+                
+                // CORREÇÃO UX: FECHAR E LIMPAR
+                fecharModal('modal-criacao'); 
+                document.getElementById('inp-titulo').value=''; document.getElementById('inp-descricao').value=''; document.getElementById('inp-os').value=''; document.getElementById('inp-sc').value='';
+                
+                carregarDadosAtuais(); 
+            }
+        }
+
+        async function adicionarMaterial() {
+            const n=document.getElementById('mat-nome').value; if(!n) return;
+            await safeRequest(pb.collection('materiais').create({ acao_vinculada:State.acaoAtualId, descricao:n, codigo_item:document.getElementById('mat-code').value, quantidade:document.getElementById('mat-qtd').value||1, qtd_atendida:document.getElementById('mat-qtd').value||1, urgencia_material:'Média', status_compra:'Em cotação' }));
+            await registrarHistorico(State.acaoAtualId, `adicionou item: ${n}`);
+            await calcularStatusGeral(State.acaoAtualId); // Atualiza status mãe
+            document.getElementById('mat-nome').value=''; renderMateriaisModal(State.acaoAtualId);
+        }
+        
+        // --- IMPORTS ---
+        function prepararImportacao(inp) { if(!inp.files[0])return; const r=new FileReader(); r.onload=e=>{ const wb=XLSX.read(e.target.result,{type:'array'}); State.cacheExcel=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1}); 
+            const h=State.cacheExcel[0]; const s=['map-desc','map-qtd','map-code']; s.forEach(id=>{ const el=document.getElementById(id); el.innerHTML='<option value="">Selecione</option>'; h.forEach((c,i)=>el.innerHTML+=`<option value="${i}">${c}</option>`); });
+            document.getElementById('modal-import-map').classList.add('active'); inp.value=''; }; r.readAsArrayBuffer(inp.files[0]); }
+        async function confirmarImportacao() {
+            const d=document.getElementById('map-desc').value; const q=document.getElementById('map-qtd').value; const c=document.getElementById('map-code').value;
+            if(!d || !q) return showToast('Campos obrigatórios','error'); showLoading('Importando...'); let cnt=0;
+            for(let i=1;i<State.cacheExcel.length;i++){ const r=State.cacheExcel[i]; if(r[d]){ const qt=r[q]||1; await pb.collection('materiais').create({acao_vinculada:State.acaoAtualId, descricao:r[d], quantidade:qt, qtd_atendida:qt, codigo_item:c?r[c]:'', urgencia_material:'Média', status_compra:'Em cotação'}); cnt++; } }
+            await registrarHistorico(State.acaoAtualId, `importou ${cnt} itens.`); await calcularStatusGeral(State.acaoAtualId); showToast(`${cnt} importados!`); fecharModal('modal-import-map'); renderMateriaisModal(State.acaoAtualId); hideLoading();
+        }
+
         function fecharModal(id) { document.getElementById(id).classList.remove('active'); State.acaoAtualId=null; }
         function abrirModalCriacao() { document.getElementById('modal-criacao').classList.add('active'); }
 
