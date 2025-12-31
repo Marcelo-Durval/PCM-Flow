@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PCM Flow | V9 UX & Status</title>
+    <title>PCM Flow | V15 Final</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pocketbase/0.21.1/pocketbase.umd.min.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
@@ -17,6 +17,7 @@
             --primary: #0f172a; --secondary: #334155; --accent: #2563eb;
             --bg: #f8fafc; --white: #ffffff;
             --danger: #ef4444; --warning: #f59e0b; --success: #10b981;
+            --purple: #7c3aed; --border: #e2e8f0; --text-muted: #64748b;
             --sidebar-width: 260px;
         }
         
@@ -75,20 +76,20 @@
 
         /* Badges */
         .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; display: inline-block; white-space: nowrap; }
-        /* Urgencia */
-        .bd-Alta { background: #fee2e2; color: #991b1b; } .bd-Média { background: #fef3c7; color: #92400e; } .bd-Baixa { background: #dcfce7; color: #166534; }
         
-        /* Status MATERIAIS */
         .st-cotacao { background: #fff7ed; color: #9a3412; border: 1px solid #fed7aa; }
         .st-aprovacao { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
         .st-aprovado { background: #faf5ff; color: #6b21a8; border: 1px solid #e9d5ff; }
+        .st-pagamento { background: #ccfbf1; color: #0f766e; border: 1px solid #99f6e4; }
         .st-entrega { background: #f0f9ff; color: #0369a1; border: 1px solid #bae6fd; }
         .st-entregue { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
-
-        /* Status SOLICITAÇÃO (Novos) */
-        .sts-sem-mat { background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; } /* Cinza */
-        .sts-em-compras { background: #dbeafe; color: #2563eb; border: 1px solid #93c5fd; } /* Azul */
-        .sts-finalizado { background: #dcfce7; color: #16a34a; border: 1px solid #86efac; } /* Verde */
+        
+        .bd-Alta { background: #fee2e2; color: #991b1b; } .bd-Média { background: #fef3c7; color: #92400e; } .bd-Baixa { background: #dcfce7; color: #166534; }
+        
+        /* Novos status solicitação */
+        .sts-sem-mat { background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; }
+        .sts-em-compras { background: #dbeafe; color: #2563eb; border: 1px solid #93c5fd; }
+        .sts-finalizado { background: #dcfce7; color: #16a34a; border: 1px solid #86efac; }
 
         /* Forms & Modals */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(2px); z-index: 2000; display: flex; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: all 0.2s; }
@@ -243,18 +244,11 @@
             <div id="view-compras" class="hidden">
                 <div class="flex items-center gap-10" style="margin-bottom: 20px; flex-wrap: wrap;">
                     <input type="text" id="busca-compra" placeholder="Buscar..." class="form-control" style="width: 250px;" onkeyup="renderTabelaCompras()">
-                    <select id="filtro-compra-status" class="form-control" style="width: 200px;" onchange="renderTabelaCompras()">
-                        <option value="">Todos Status</option>
-                        <option value="Em cotação">Em cotação</option>
-                        <option value="Aguardando aprovação">Ag. Aprovação</option>
-                        <option value="Aprovado">Aprovado</option>
-                        <option value="Aguardando entrega">Ag. Entrega</option>
-                        <option value="Entregue">Entregue</option>
-                    </select>
+                    <select id="filtro-compra-status" class="form-control" style="width: 200px;" onchange="renderTabelaCompras()"></select>
                 </div>
                 <div class="table-container">
                     <table class="data-table">
-                        <thead><tr><th width="120">Status</th><th>Descrição</th><th>Fornecedor</th><th>Total (R$)</th><th>Previsão</th><th width="100">Ação</th></tr></thead>
+                        <thead><tr><th width="140">Status</th><th>Descrição</th><th>Fornecedor</th><th>Total (R$)</th><th>Previsão</th><th width="100">Ação</th></tr></thead>
                         <tbody id="tabela-compras"></tbody>
                     </table>
                 </div>
@@ -354,6 +348,17 @@
         const pb = new PocketBase(API_URL);
         pb.autoCancellation(false);
 
+        // LISTA DE STATUS
+        const STATUS_OPCOES = [
+            "Em cotação",
+            "Ag. aprovação",
+            "Aprovado",
+            "Ag. pagamento",
+            "Ag. entrega",
+            "Entregue",
+            "Cancelado"
+        ];
+
         const State = {
             acaoAtualId: null, usuarioAtual: null,
             dadosAcoes: [], dadosMateriais: [], dadosLogs: [],
@@ -367,14 +372,26 @@
             document.getElementById('dash-end').valueAsDate = end;
             document.getElementById('dash-start').valueAsDate = start;
             State.filtroData.start = start; State.filtroData.end = end;
+            
+            // Popula Filtro de Compras
+            const sel = document.getElementById('filtro-compra-status');
+            sel.innerHTML = '<option value="">Todos Status</option>';
+            STATUS_OPCOES.forEach(s => sel.innerHTML += `<option value="${s}">${s}</option>`);
         }
 
         // --- HELPERS ---
         async function safeRequest(promise, txt) {
             if(txt) showLoading(txt);
-            try { const r = await promise; return {success:true, data:r}; }
-            catch(err) { console.error("API Error:", err); showToast(err.status===0?"Servidor Offline":err.message, 'error'); return {success:false, error:err}; }
-            finally { if(txt) hideLoading(); }
+            try { 
+                const r = await promise; 
+                return {success:true, data:r}; 
+            } catch(err) { 
+                console.error("API Error:", err); 
+                showToast(err.message||"Erro",'error'); 
+                return {success:false, error:err}; 
+            } finally { 
+                if(txt) hideLoading(); 
+            }
         }
         function showLoading(t) { document.getElementById('loading-text').innerText=t; document.getElementById('loading-overlay').classList.remove('hidden'); }
         function hideLoading() { document.getElementById('loading-overlay').classList.add('hidden'); }
@@ -383,13 +400,16 @@
             el.innerHTML=`<span>${m}</span><span onclick="this.parentElement.remove()" style="cursor:pointer">&times;</span>`;
             c.appendChild(el); setTimeout(()=>el.classList.add('show'),10); setTimeout(()=>{el.classList.remove('show');setTimeout(()=>el.remove(),300)},4000);
         }
+        
+        // CSS CLASSES
         function getBadgeClass(s) {
             if(!s) return 'badge';
             if(s.includes('otação')) return 'st-cotacao';
             if(s.includes('provação')) return 'st-aprovacao';
-            if(s==='Aprovado') return 'st-aprovado';
+            if(s === 'Aprovado') return 'st-aprovado';
+            if(s.includes('agamento')) return 'st-pagamento';
             if(s.includes('ntrega')) return 'st-entrega';
-            if(s==='Entregue') return 'st-entregue';
+            if(s === 'Entregue') return 'st-entregue';
             return 'badge';
         }
         function getActionStatusClass(s) {
@@ -405,7 +425,6 @@
             if(r.success) checkAuth(); else document.getElementById('login-error-msg').style.display='block';
         }
         function logout() { pb.authStore.clear(); checkAuth(); }
-        
         async function checkAuth() {
             if(pb.authStore.isValid) {
                 document.getElementById('login-screen').classList.remove('active');
@@ -437,24 +456,21 @@
             } catch(e) { console.warn(e); }
         }
 
-        // --- LÓGICA DE STATUS AUTOMÁTICO ---
+        // --- STATUS ---
         async function calcularStatusGeral(acaoId) {
-            // Busca materiais da ação
-            const mats = await pb.collection('materiais').getFullList({filter: `acao_vinculada="${acaoId}"`});
-            
-            let novoStatus = 'Sem materiais';
-            if (mats.length > 0) {
-                // Se todos entregues ou cancelados
-                const todosFim = mats.every(m => m.status_compra === 'Entregue' || m.status_compra === 'Cancelado');
-                if(todosFim) novoStatus = 'Concluído';
-                else novoStatus = 'Em compras';
-            }
-            
-            // Atualiza ação "mãe"
-            await pb.collection('acoes').update(acaoId, { status: novoStatus });
+            try {
+                const mats = await pb.collection('materiais').getFullList({filter: `acao_vinculada="${acaoId}"`});
+                let novoStatus = 'Sem materiais';
+                if (mats.length > 0) {
+                    const todosFim = mats.every(m => m.status_compra === 'Entregue' || m.status_compra === 'Cancelado');
+                    if(todosFim) novoStatus = 'Concluído';
+                    else novoStatus = 'Em compras';
+                }
+                await pb.collection('acoes').update(acaoId, { status: novoStatus });
+            } catch(e) { console.error(e); }
         }
 
-        // --- CORE DATA ---
+        // --- DADOS ---
         async function carregarDadosAtuais() {
             const [r1, r2, r3] = await Promise.all([
                 safeRequest(pb.collection('acoes').getFullList({sort:'-created'})),
@@ -462,8 +478,8 @@
                 safeRequest(pb.collection('historico').getList(1, 5, {sort:'-created'}))
             ]);
             
-            if(r1.success) State.dadosAcoes = r1.data;
-            if(r2.success) State.dadosMateriais = r2.data;
+            State.dadosAcoes = r1.success ? r1.data : [];
+            State.dadosMateriais = r2.success ? r2.data : [];
             if(r3.success) { State.dadosLogs = r3.data.items; renderNotificacoes(); }
 
             const tela = document.querySelector('.menu-item.active').id.replace('menu-','');
@@ -529,7 +545,7 @@
             State.filteredMats = matF;
 
             document.getElementById('kpi-os-aberta').innerText = State.dadosAcoes.filter(a=>a.status!=='Concluído').length;
-            document.getElementById('kpi-aprovacao').innerText = matF.filter(m=>m.status_compra==='Aguardando aprovação').length;
+            document.getElementById('kpi-aprovacao').innerText = matF.filter(m=>m.status_compra==='Ag. aprovação').length;
             
             const val = matF.reduce((a,m)=>a+((m.valor||0)*(m.qtd_atendida||m.quantidade||0)),0);
             document.getElementById('kpi-valor-total').innerText = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(val);
@@ -538,7 +554,7 @@
 
             const stC={}; matF.forEach(m=>stC[m.status_compra]=(stC[m.status_compra]||0)+1);
             if(State.chartStatusInst) State.chartStatusInst.destroy();
-            State.chartStatusInst=new Chart(document.getElementById('chartStatus'),{type:'doughnut',data:{labels:Object.keys(stC),datasets:[{data:Object.values(stC),backgroundColor:['#f59e0b','#3b82f6','#10b981','#ef4444','#7c3aed']}]},options:{responsive:true,maintainAspectRatio:false}});
+            State.chartStatusInst=new Chart(document.getElementById('chartStatus'),{type:'doughnut',data:{labels:Object.keys(stC),datasets:[{data:Object.values(stC),backgroundColor:['#f59e0b','#3b82f6','#10b981','#0f766e','#0369a1','#15803d','#ef4444']}]},options:{responsive:true,maintainAspectRatio:false}});
 
             const ag={'0-7d':0,'7-15d':0,'+15d':0};
             matF.forEach(m=>{ if(!['Entregue','Cancelado'].includes(m.status_compra)){ const d=Math.ceil(Math.abs(new Date()-new Date(m.created))/(86400000)); if(d<=7)ag['0-7d']++; else if(d<=15)ag['7-15d']++; else ag['+15d']++; }});
@@ -547,7 +563,7 @@
 
             const ur={'Alta':0,'Média':0,'Baixa':0}; matF.forEach(m=>{if(!['Entregue','Cancelado'].includes(m.status_compra)) ur[m.urgencia_material]=(ur[m.urgencia_material]||0)+1;});
             if(State.chartUrgenciaInst) State.chartUrgenciaInst.destroy();
-            State.chartUrgenciaInst=new Chart(document.getElementById('chartUrgencia'),{type:'bar',data:{labels:Object.keys(ur),datasets:[{data:Object.values(ur),backgroundColor:['#ef4444','#f59e0b','#10b981']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}});
+            State.chartUrgenciaInst=new Chart(document.getElementById('chartUrgencia'),{type:'bar',data:{labels:Object.keys(ur),datasets:[{data:Object.values(ur),backgroundColor:['#ef4444','#f59e0b','#10b981']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
 
             const evs = matF.filter(m=>m.data_entrega && !['Entregue','Cancelado'].includes(m.status_compra)).map(m=>({title:m.descricao,start:m.data_entrega.split('T')[0],backgroundColor:'#2563eb'}));
             setTimeout(()=>{ if(!State.calendarInst) { State.calendarInst=new FullCalendar.Calendar(document.getElementById('calendar'),{initialView:'dayGridMonth',locale:'pt-br',height:'100%',events:evs}); State.calendarInst.render(); } else { State.calendarInst.removeAllEvents(); State.calendarInst.addEventSource(evs); State.calendarInst.render(); } },100);
@@ -569,7 +585,7 @@
         // --- TABELAS ---
         function renderTabelaAprovacao() {
             const tb = document.getElementById('tabela-aprovacao'); tb.innerHTML='';
-            const data = State.dadosMateriais.filter(m => m.status_compra === 'Aguardando aprovação');
+            const data = State.dadosMateriais.filter(m => m.status_compra === 'Ag. aprovação');
             if(data.length === 0) { tb.innerHTML='<tr><td colspan="7" style="text-align:center; padding:20px;">Nada pendente.</td></tr>'; return; }
             data.forEach(m => {
                 const q = m.qtd_atendida || m.quantidade || 0; const t = (m.valor||0)*q;
@@ -583,7 +599,6 @@
             const tb=document.getElementById('tabela-manutencao'); tb.innerHTML='';
             const txt=document.getElementById('busca-manut').value.toLowerCase(); const urg=document.getElementById('filtro-manut-urg').value;
             State.dadosAcoes.filter(a=>(a.titulo+a.ordem_servico).toLowerCase().includes(txt) && (!urg || a.urgencia===urg)).forEach(a=>{
-                // STATUS AUTOMATICO VISUAL
                 let badgeStatus = getActionStatusClass(a.status);
                 tb.innerHTML+=`<tr><td>${a.ordem_servico||'-'}</td><td><b>${a.titulo}</b></td><td><span class="badge ${badgeStatus}">${a.status||'Aberto'}</span></td><td>${a.categoria}</td><td><span class="badge bd-${a.urgencia}">${a.urgencia}</span></td><td>${new Date(a.created).toLocaleDateString()}</td><td><button class="btn btn-sm btn-outline" onclick="abrirModalDetalhes('${a.id}')">Ver</button></td></tr>`;
             });
@@ -599,7 +614,7 @@
             });
         }
 
-        // --- MODAL ---
+        // --- MODAL & EDITOR (PADRONIZADO) ---
         async function abrirModalDetalhes(id) {
             State.acaoAtualId=id; document.getElementById('modal-detalhes').classList.add('active');
             const r=await safeRequest(pb.collection('acoes').getOne(id));
@@ -616,6 +631,13 @@
                 const qo=m.quantidade||0; const qa=m.qtd_atendida||qo; const saldo=qo-qa; const tot=(m.valor||0)*qa;
                 const dt = m.data_entrega && m.data_entrega.length>=10 ? m.data_entrega.substring(0,10) : '';
                 
+                // Gera options padronizadas
+                let optionsHtml = '';
+                STATUS_OPCOES.forEach(opt => {
+                    const selected = m.status_compra === opt ? 'selected' : '';
+                    optionsHtml += `<option value="${opt}" ${selected}>${opt}</option>`;
+                });
+
                 div.innerHTML += `<div class="mat-card">
                     <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
                         <span class="badge ${getBadgeClass(m.status_compra)}">${m.status_compra}</span>
@@ -626,13 +648,11 @@
                         <div class="col-span-3"><label class="form-label">Cód</label><input type="text" class="form-control" value="${m.codigo_item||''}" onblur="upMat('${m.id}','codigo_item',this.value)"></div>
                         <div class="col-span-3"><label class="form-label">Qtd Sol.</label><input type="number" class="form-control" value="${qo}" onblur="upMat('${m.id}','quantidade',this.value)"></div>
                         <div class="col-span-3"><label class="form-label">Qtd Atend.</label><input type="number" class="form-control" value="${qa}" onblur="upMat('${m.id}','qtd_atendida',this.value)"></div>
-                        <div class="col-span-3"><label class="form-label">Status</label><select class="form-control" onchange="upMat('${m.id}','status_compra',this.value)">
-                            <option value="Em cotação" ${m.status_compra=='Em cotação'?'selected':''}>Cotação</option>
-                            <option value="Aguardando aprovação" ${m.status_compra=='Aguardando aprovação'?'selected':''}>Ag. Aprovação</option>
-                            <option value="Aprovado" ${m.status_compra=='Aprovado'?'selected':''}>Aprovado</option>
-                            <option value="Entregue" ${m.status_compra=='Entregue'?'selected':''}>Entregue</option>
-                            <option value="Cancelado" ${m.status_compra=='Cancelado'?'selected':''}>Cancelado</option>
-                        </select></div>
+                        <div class="col-span-3"><label class="form-label">Status</label>
+                            <select class="form-control" onchange="upMat('${m.id}','status_compra',this.value)">
+                                ${optionsHtml}
+                            </select>
+                        </div>
                     </div>
                     <div class="mat-row">
                         <div class="col-span-4"><label class="form-label">Forn.</label><input type="text" class="form-control" value="${m.fornecedor||''}" onblur="upMat('${m.id}','fornecedor',this.value)"></div>
@@ -643,12 +663,13 @@
                 </div>`;
             });
         }
+        
         async function upMat(id,k,v) { 
             const d={}; d[k]=v; if(k=='data_entrega' && !v) d[k]=null; await pb.collection('materiais').update(id,d);
             if(['status_compra','valor','qtd_atendida'].includes(k)) { 
                 const m=await pb.collection('materiais').getOne(id); 
                 await registrarHistorico(m.acao_vinculada, `alterou ${k} para ${v}`); 
-                await calcularStatusGeral(m.acao_vinculada); // RECALCULA STATUS MÃE
+                await calcularStatusGeral(m.acao_vinculada);
             }
             renderMateriaisModal(State.acaoAtualId);
         }
@@ -665,41 +686,127 @@
             });
             d.scrollTop=d.scrollHeight;
         }
-        async function enviarMensagem() { const m=document.getElementById('chat-msg').value; if(!m)return; await safeRequest(pb.collection('historico').create({acao_vinculada:State.acaoAtualId,usuario:State.usuarioAtual.id,mensagem:m,tipo:'comentario'})); document.getElementById('chat-msg').value=''; renderChat(State.acaoAtualId); }
+        
+        async function enviarMensagem() { 
+            const m=document.getElementById('chat-msg').value; if(!m)return; 
+            await safeRequest(pb.collection('historico').create({acao_vinculada:State.acaoAtualId,usuario:State.usuarioAtual.id,mensagem:m,tipo:'comentario'})); 
+            document.getElementById('chat-msg').value=''; 
+            renderChat(State.acaoAtualId); 
+        }
         
         async function salvarSolicitacao() {
             const t=document.getElementById('inp-titulo').value; const r=document.getElementById('inp-responsavel').value; 
             if(!t || !r) return showToast('Preencha título e responsável','error');
-            const res=await safeRequest(pb.collection('acoes').create({titulo:t, descricao:document.getElementById('inp-descricao').value, ordem_servico:document.getElementById('inp-os').value, numero_sc: document.getElementById('inp-sc').value, categoria:document.getElementById('inp-categoria').value, urgencia:document.getElementById('inp-urgencia').value, responsavel:r, status:'Sem materiais'}),"Salvando...");
+            
+            // Aqui estava o erro: objeto expandido corretamente
+            const dadosSolicitacao = {
+                titulo: t,
+                descricao: document.getElementById('inp-descricao').value,
+                ordem_servico: document.getElementById('inp-os').value,
+                numero_sc: document.getElementById('inp-sc').value,
+                categoria: document.getElementById('inp-categoria').value,
+                urgencia: document.getElementById('inp-urgencia').value,
+                responsavel: r,
+                status: 'Sem materiais'
+            };
+
+            const res = await safeRequest(pb.collection('acoes').create(dadosSolicitacao), "Salvando...");
+            
             if(res.success) { 
                 await registrarHistorico(res.data.id, `criou solicitação.`); 
                 showToast('Criado!'); 
-                
-                // CORREÇÃO UX: FECHAR E LIMPAR
                 fecharModal('modal-criacao'); 
-                document.getElementById('inp-titulo').value=''; document.getElementById('inp-descricao').value=''; document.getElementById('inp-os').value=''; document.getElementById('inp-sc').value='';
+                
+                // Limpa campos
+                document.getElementById('inp-titulo').value=''; 
+                document.getElementById('inp-descricao').value=''; 
+                document.getElementById('inp-os').value=''; 
+                document.getElementById('inp-sc').value='';
                 
                 carregarDadosAtuais(); 
             }
         }
-
+        
         async function adicionarMaterial() {
             const n=document.getElementById('mat-nome').value; if(!n) return;
-            await safeRequest(pb.collection('materiais').create({ acao_vinculada:State.acaoAtualId, descricao:n, codigo_item:document.getElementById('mat-code').value, quantidade:document.getElementById('mat-qtd').value||1, qtd_atendida:document.getElementById('mat-qtd').value||1, urgencia_material:'Média', status_compra:'Em cotação' }));
+            
+            const novoMaterial = { 
+                acao_vinculada: State.acaoAtualId, 
+                descricao: n, 
+                codigo_item: document.getElementById('mat-code').value, 
+                quantidade: document.getElementById('mat-qtd').value || 1, 
+                qtd_atendida: document.getElementById('mat-qtd').value || 1, 
+                urgencia_material: 'Média', 
+                status_compra: 'Em cotação' 
+            };
+
+            await safeRequest(pb.collection('materiais').create(novoMaterial));
             await registrarHistorico(State.acaoAtualId, `adicionou item: ${n}`);
-            await calcularStatusGeral(State.acaoAtualId); // Atualiza status mãe
-            document.getElementById('mat-nome').value=''; renderMateriaisModal(State.acaoAtualId);
+            await calcularStatusGeral(State.acaoAtualId);
+            
+            document.getElementById('mat-nome').value=''; 
+            document.getElementById('mat-code').value=''; 
+            document.getElementById('mat-qtd').value='';
+            
+            renderMateriaisModal(State.acaoAtualId);
         }
         
         // --- IMPORTS ---
-        function prepararImportacao(inp) { if(!inp.files[0])return; const r=new FileReader(); r.onload=e=>{ const wb=XLSX.read(e.target.result,{type:'array'}); State.cacheExcel=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1}); 
-            const h=State.cacheExcel[0]; const s=['map-desc','map-qtd','map-code']; s.forEach(id=>{ const el=document.getElementById(id); el.innerHTML='<option value="">Selecione</option>'; h.forEach((c,i)=>el.innerHTML+=`<option value="${i}">${c}</option>`); });
-            document.getElementById('modal-import-map').classList.add('active'); inp.value=''; }; r.readAsArrayBuffer(inp.files[0]); }
+        function prepararImportacao(inp) { 
+            if(!inp.files[0])return; 
+            const r=new FileReader(); 
+            r.onload=e=>{ 
+                const wb=XLSX.read(e.target.result,{type:'array'}); 
+                State.cacheExcel=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1}); 
+                const h=State.cacheExcel[0]; 
+                const s=['map-desc','map-qtd','map-code']; 
+                s.forEach(id=>{ 
+                    const el=document.getElementById(id); 
+                    el.innerHTML='<option value="">Selecione</option>'; 
+                    h.forEach((c,i)=>el.innerHTML+=`<option value="${i}">${c}</option>`); 
+                });
+                document.getElementById('modal-import-map').classList.add('active'); 
+                inp.value=''; 
+            }; 
+            r.readAsArrayBuffer(inp.files[0]); 
+        }
+        
         async function confirmarImportacao() {
-            const d=document.getElementById('map-desc').value; const q=document.getElementById('map-qtd').value; const c=document.getElementById('map-code').value;
-            if(!d || !q) return showToast('Campos obrigatórios','error'); showLoading('Importando...'); let cnt=0;
-            for(let i=1;i<State.cacheExcel.length;i++){ const r=State.cacheExcel[i]; if(r[d]){ const qt=r[q]||1; await pb.collection('materiais').create({acao_vinculada:State.acaoAtualId, descricao:r[d], quantidade:qt, qtd_atendida:qt, codigo_item:c?r[c]:'', urgencia_material:'Média', status_compra:'Em cotação'}); cnt++; } }
-            await registrarHistorico(State.acaoAtualId, `importou ${cnt} itens.`); await calcularStatusGeral(State.acaoAtualId); showToast(`${cnt} importados!`); fecharModal('modal-import-map'); renderMateriaisModal(State.acaoAtualId); hideLoading();
+            const d=document.getElementById('map-desc').value; 
+            const q=document.getElementById('map-qtd').value; 
+            const c=document.getElementById('map-code').value;
+            
+            if(!d || !q) return showToast('Campos obrigatórios','error'); 
+            
+            showLoading('Importando...'); 
+            let cnt=0;
+            for(let i=1;i<State.cacheExcel.length;i++){ 
+                const r=State.cacheExcel[i]; 
+                if(r[d]){ 
+                    const qt=r[q]||1; 
+                    
+                    const matImport = {
+                        acao_vinculada: State.acaoAtualId, 
+                        descricao: r[d], 
+                        quantidade: qt, 
+                        qtd_atendida: qt, 
+                        codigo_item: c ? r[c] : '', 
+                        urgencia_material: 'Média', 
+                        status_compra: 'Em cotação'
+                    };
+
+                    await pb.collection('materiais').create(matImport); 
+                    cnt++; 
+                } 
+            }
+            
+            await registrarHistorico(State.acaoAtualId, `importou ${cnt} itens.`); 
+            await calcularStatusGeral(State.acaoAtualId);
+            
+            showToast(`${cnt} importados!`); 
+            fecharModal('modal-import-map'); 
+            renderMateriaisModal(State.acaoAtualId); 
+            hideLoading();
         }
 
         function fecharModal(id) { document.getElementById(id).classList.remove('active'); State.acaoAtualId=null; }
