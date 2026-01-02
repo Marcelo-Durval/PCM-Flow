@@ -88,8 +88,9 @@
         
         /* Novos status solicitação */
         .sts-sem-mat { background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; }
-        .sts-em-compras { background: #dbeafe; color: #2563eb; border: 1px solid #93c5fd; }
-        .sts-finalizado { background: #dcfce7; color: #16a34a; border: 1px solid #86efac; }
+        .sts-em-exec { background: #dbeafe; color: #2563eb; border: 1px solid #93c5fd; }
+        .sts-concluido { background: #dcfce7; color: #16a34a; border: 1px solid #86efac; }
+        .sts-prog { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
 
         /* Forms & Modals */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(2px); z-index: 2000; display: flex; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: all 0.2s; }
@@ -106,7 +107,7 @@
 
         .mat-card { border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-bottom: 10px; background: white; }
         .mat-row { display: grid; grid-template-columns: repeat(12, 1fr); gap: 10px; align-items: end; margin-bottom: 5px; }
-        .col-span-3 { grid-column: span 3; } .col-span-4 { grid-column: span 4; } .col-span-6 { grid-column: span 6; } .col-span-12 { grid-column: span 12; }
+        .col-span-2 { grid-column: span 2; } .col-span-3 { grid-column: span 3; } .col-span-4 { grid-column: span 4; } .col-span-6 { grid-column: span 6; } .col-span-12 { grid-column: span 12; }
 
         .chat-log-sys { font-size: 0.75rem; color: #64748b; text-align: center; margin: 8px 0; font-style: italic; background: #f1f5f9; padding: 4px; border-radius: 4px; }
         .chat-time { font-size: 0.7rem; color: #94a3b8; display: block; margin-top: 4px; text-align: right; }
@@ -248,7 +249,7 @@
                 </div>
                 <div class="table-container">
                     <table class="data-table">
-                        <thead><tr><th width="140">Status</th><th>Descrição</th><th>Fornecedor</th><th>Total (R$)</th><th>Previsão</th><th width="100">Ação</th></tr></thead>
+                        <thead><tr><th width="140">Status</th><th style="color:var(--accent)">AF</th><th>Descrição</th><th>Fornecedor</th><th>Total (R$)</th><th>Previsão</th><th width="100">Ação</th></tr></thead>
                         <tbody id="tabela-compras"></tbody>
                     </table>
                 </div>
@@ -387,7 +388,9 @@
                 return {success:true, data:r}; 
             } catch(err) { 
                 console.error("API Error:", err); 
-                showToast(err.message||"Erro",'error'); 
+                let msg = err.message||"Erro";
+                if(err.data && err.data.data) { msg = `Erro: ${Object.keys(err.data.data).join(', ')}`; }
+                showToast(msg,'error'); 
                 return {success:false, error:err}; 
             } finally { 
                 if(txt) hideLoading(); 
@@ -413,9 +416,10 @@
             return 'badge';
         }
         function getActionStatusClass(s) {
-            if(s==='Sem materiais') return 'sts-sem-mat';
-            if(s==='Em compras') return 'sts-em-compras';
-            if(s==='Concluído') return 'sts-finalizado';
+            if(s==='Aguardando materiais') return 'sts-sem-mat';
+            if(s==='Em execução') return 'sts-em-exec';
+            if(s==='Concluído') return 'sts-concluido';
+            if(s==='Programado') return 'sts-prog';
             return 'badge';
         }
 
@@ -460,14 +464,27 @@
         async function calcularStatusGeral(acaoId) {
             try {
                 const mats = await pb.collection('materiais').getFullList({filter: `acao_vinculada="${acaoId}"`});
-                let novoStatus = 'Sem materiais';
+                let novoStatus = 'Aguardando materiais';
                 if (mats.length > 0) {
                     const todosFim = mats.every(m => m.status_compra === 'Entregue' || m.status_compra === 'Cancelado');
-                    if(todosFim) novoStatus = 'Concluído';
-                    else novoStatus = 'Em compras';
+                    if(todosFim) novoStatus = 'Concluído'; 
+                    else novoStatus = 'Aguardando materiais';
                 }
                 await pb.collection('acoes').update(acaoId, { status: novoStatus });
             } catch(e) { console.error(e); }
+        }
+        
+        // --- LOG/HISTORICO ---
+        async function registrarHistorico(acaoId, msg) {
+            if(!acaoId || !State.usuarioAtual) return;
+            try {
+                await pb.collection('historico').create({
+                    acao_vinculada: acaoId,
+                    usuario: State.usuarioAtual.id,
+                    mensagem: msg,
+                    tipo: 'sistema'
+                });
+            } catch(e) { console.error("Erro hist:", e); }
         }
 
         // --- DADOS ---
@@ -575,6 +592,7 @@
                 const ac = m.expand?.acao_vinculada || {};
                 return {
                     "Data Criação": new Date(m.created).toLocaleDateString(), "OS": ac.ordem_servico||'', "Item": m.descricao,
+                    "AF": m.num_af || '',
                     "Qtd Orig": m.quantidade, "Qtd Atend": m.qtd_atendida||m.quantidade, "Valor Unit": m.valor, 
                     "Total": (m.valor||0)*(m.qtd_atendida||m.quantidade), "Status": m.status_compra, "Fornecedor": m.fornecedor
                 };
@@ -607,10 +625,12 @@
         function renderTabelaCompras() {
             const tb=document.getElementById('tabela-compras'); tb.innerHTML='';
             const txt=document.getElementById('busca-compra').value.toLowerCase(); const st=document.getElementById('filtro-compra-status').value;
-            State.dadosMateriais.filter(m=>(m.descricao+(m.expand?.acao_vinculada?.ordem_servico||'')).toLowerCase().includes(txt) && (!st || m.status_compra===st)).forEach(m=>{
+            // UPDATE NA BUSCA: Inclui num_af
+            State.dadosMateriais.filter(m=>(m.descricao+(m.expand?.acao_vinculada?.ordem_servico||'')+(m.num_af||'')).toLowerCase().includes(txt) && (!st || m.status_compra===st)).forEach(m=>{
                 const q = m.qtd_atendida || m.quantidade || 0; const t = (m.valor||0)*q;
                 let dt = m.data_entrega ? new Date(m.data_entrega).toLocaleDateString() : '-';
-                tb.innerHTML+=`<tr><td><span class="badge ${getBadgeClass(m.status_compra)}">${m.status_compra}</span></td><td><b>${m.descricao}</b><br><small>${m.codigo_item||''}</small></td><td>${m.fornecedor||'-'}</td><td>R$ ${t.toFixed(2)}</td><td>${dt}</td><td><button class="btn btn-sm btn-outline" onclick="abrirModalDetalhes('${m.acao_vinculada}')">📝 Detalhar</button></td></tr>`;
+                // UPDATE NA TABELA: Coluna AF
+                tb.innerHTML+=`<tr><td><span class="badge ${getBadgeClass(m.status_compra)}">${m.status_compra}</span></td><td style="font-weight:bold; color:var(--accent)">${m.num_af||'-'}</td><td><b>${m.descricao}</b><br><small>${m.codigo_item||''}</small></td><td>${m.fornecedor||'-'}</td><td>R$ ${t.toFixed(2)}</td><td>${dt}</td><td><button class="btn btn-sm btn-outline" onclick="abrirModalDetalhes('${m.acao_vinculada}')">📝 Detalhar</button></td></tr>`;
             });
         }
 
@@ -631,13 +651,13 @@
                 const qo=m.quantidade||0; const qa=m.qtd_atendida||qo; const saldo=qo-qa; const tot=(m.valor||0)*qa;
                 const dt = m.data_entrega && m.data_entrega.length>=10 ? m.data_entrega.substring(0,10) : '';
                 
-                // Gera options padronizadas
                 let optionsHtml = '';
                 STATUS_OPCOES.forEach(opt => {
                     const selected = m.status_compra === opt ? 'selected' : '';
                     optionsHtml += `<option value="${opt}" ${selected}>${opt}</option>`;
                 });
 
+                // UPDATE NO LAYOUT DO CARD: Inclui AF
                 div.innerHTML += `<div class="mat-card">
                     <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
                         <span class="badge ${getBadgeClass(m.status_compra)}">${m.status_compra}</span>
@@ -655,8 +675,9 @@
                         </div>
                     </div>
                     <div class="mat-row">
-                        <div class="col-span-4"><label class="form-label">Forn.</label><input type="text" class="form-control" value="${m.fornecedor||''}" onblur="upMat('${m.id}','fornecedor',this.value)"></div>
-                        <div class="col-span-3"><label class="form-label">Unit.</label><input type="number" class="form-control" value="${m.valor||''}" onblur="upMat('${m.id}','valor',this.value)"></div>
+                        <div class="col-span-3"><label class="form-label">Forn.</label><input type="text" class="form-control" value="${m.fornecedor||''}" onblur="upMat('${m.id}','fornecedor',this.value)"></div>
+                        <div class="col-span-2"><label class="form-label" style="color:var(--accent); font-weight:bold;">AF (Nº)</label><input type="text" class="form-control" style="border-color:var(--accent);" value="${m.num_af||''}" onblur="upMat('${m.id}','num_af',this.value)"></div>
+                        <div class="col-span-2"><label class="form-label">Unit.</label><input type="number" class="form-control" value="${m.valor||''}" onblur="upMat('${m.id}','valor',this.value)"></div>
                         <div class="col-span-2"><label class="form-label">Total</label><div style="font-weight:bold; color:var(--primary); padding-top:8px;">R$ ${tot.toFixed(2)}</div></div>
                         <div class="col-span-3"><label class="form-label">Data</label><input type="date" class="form-control" value="${dt}" onblur="upMat('${m.id}','data_entrega',this.value)"></div>
                     </div>
@@ -666,7 +687,8 @@
         
         async function upMat(id,k,v) { 
             const d={}; d[k]=v; if(k=='data_entrega' && !v) d[k]=null; await pb.collection('materiais').update(id,d);
-            if(['status_compra','valor','qtd_atendida'].includes(k)) { 
+            // UPDATE: Adicionado num_af para registrar no historico
+            if(['status_compra','valor','qtd_atendida','num_af'].includes(k)) { 
                 const m=await pb.collection('materiais').getOne(id); 
                 await registrarHistorico(m.acao_vinculada, `alterou ${k} para ${v}`); 
                 await calcularStatusGeral(m.acao_vinculada);
@@ -707,7 +729,7 @@
                 categoria: document.getElementById('inp-categoria').value,
                 urgencia: document.getElementById('inp-urgencia').value,
                 responsavel: r,
-                status: 'Sem materiais'
+                status: 'Aguardando materiais'
             };
 
             const res = await safeRequest(pb.collection('acoes').create(dadosSolicitacao), "Salvando...");
