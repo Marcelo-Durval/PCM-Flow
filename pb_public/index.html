@@ -111,6 +111,10 @@
 
         .chat-log-sys { font-size: 0.75rem; color: #64748b; text-align: center; margin: 8px 0; font-style: italic; background: #f1f5f9; padding: 4px; border-radius: 4px; }
         .chat-time { font-size: 0.7rem; color: #94a3b8; display: block; margin-top: 4px; text-align: right; }
+        
+        /* Avatar Helper */
+        .user-avatar { width:30px; height:30px; background:var(--accent); border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; overflow:hidden; }
+        .user-avatar img { width:100%; height:100%; object-fit:cover; }
 
         /* TOAST NOTIFICATIONS */
         #toast-container { position: fixed; top: 20px; right: 20px; z-index: 5000; display: flex; flex-direction: column; gap: 10px; }
@@ -146,11 +150,11 @@
             <h1 style="color:var(--primary); margin: 0 0 10px 0;">🔐 PCM Flow</h1>
             <p style="color:var(--text-muted); margin-bottom: 30px;">Acesso Restrito</p>
             <form onsubmit="event.preventDefault(); fazerLogin();">
-                <div style="margin-bottom: 15px; text-align: left;"><label class="form-label">E-mail</label><input type="text" id="email" class="form-control" required></div>
+                <div style="margin-bottom: 15px; text-align: left;"><label class="form-label">E-mail ou Usuário</label><input type="text" id="email" class="form-control" required></div>
                 <div style="margin-bottom: 25px; text-align: left;"><label class="form-label">Senha</label><input type="password" id="password" class="form-control" required></div>
                 <button type="submit" class="btn btn-primary w-full" style="padding: 14px;">ENTRAR NO SISTEMA</button>
             </form>
-            <div id="login-error-msg" style="margin-top: 15px; color: #ef4444; font-size: 0.9rem; display:none;">Erro de conexão.</div>
+            <div id="login-error-msg" style="margin-top: 15px; color: #ef4444; font-size: 0.9rem; display:none; font-weight:bold;"></div>
         </div>
     </div>
 
@@ -161,8 +165,8 @@
         <div class="menu-item" id="menu-manutencao" onclick="navegar('manutencao')"><span>🔧</span> Manutenção</div>
         <div class="menu-item" id="menu-compras" onclick="navegar('compras')"><span>🛒</span> Compras</div>
         <div style="margin-top: auto; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
-            <div style="font-size: 0.85rem; margin-bottom: 10px; color: #cbd5e1; display:flex; align-items:center; gap:8px;">
-                <div style="width:30px; height:30px; background:var(--accent); border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold;">U</div>
+            <div style="font-size: 0.85rem; margin-bottom: 10px; color: #cbd5e1; display:flex; align-items:center; gap:8px; cursor:pointer;" onclick="abrirPerfil()" title="Editar Perfil">
+                <div class="user-avatar" id="user-avatar-display">U</div>
                 <span id="user-display">Usuário</span>
             </div>
             <button onclick="logout()" class="btn btn-outline" style="width:100%; border-color: rgba(255,255,255,0.2); background: transparent; color: white;">Sair</button>
@@ -339,6 +343,41 @@
         </div>
     </div>
 
+    <div id="modal-perfil" class="modal-overlay" style="z-index: 2100;">
+        <div class="modal-box" style="max-width: 400px; height: auto; padding: 25px;">
+            <h3 style="margin-top:0; border-bottom:1px solid #e2e8f0; padding-bottom:10px;">👤 Meu Perfil</h3>
+            
+            <div style="margin-bottom:20px; text-align:center;">
+                <label class="form-label">Alterar Foto</label>
+                <input type="file" id="perf-avatar" class="form-control" accept="image/*">
+            </div>
+
+            <div style="background:#f1f5f9; padding:15px; border-radius:8px; margin-bottom:20px;">
+                <h4 style="margin:0 0 10px 0; font-size:0.9rem;">Trocar Senha</h4>
+                
+                <div style="margin-bottom:10px;">
+                    <label class="form-label">Senha Atual (Obrigatório para troca)</label>
+                    <input type="password" id="perf-old-pass" class="form-control">
+                </div>
+
+                <div style="margin-bottom:10px;">
+                    <label class="form-label">Nova Senha</label>
+                    <input type="password" id="perf-pass" class="form-control">
+                </div>
+                
+                <div>
+                    <label class="form-label">Confirmar Nova Senha</label>
+                    <input type="password" id="perf-pass-conf" class="form-control">
+                </div>
+            </div>
+
+            <div class="flex gap-10">
+                <button onclick="fecharModal('modal-perfil')" class="btn btn-outline w-full">Cancelar</button>
+                <button onclick="salvarPerfil()" class="btn btn-success w-full">Salvar Alterações</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // --- CONFIG ---
         let API_URL = '/';
@@ -423,17 +462,62 @@
             return 'badge';
         }
 
-        // --- AUTH ---
+        // --- MELHORIA LOGIN: Email OU Usuario ---
         async function fazerLogin() {
-            const r = await safeRequest(pb.collection('users').authWithPassword(document.getElementById('email').value, document.getElementById('password').value), "Entrando...");
-            if(r.success) checkAuth(); else document.getElementById('login-error-msg').style.display='block';
+            const loginInput = document.getElementById('email').value.trim();
+            const pass = document.getElementById('password').value;
+            const errDiv = document.getElementById('login-error-msg');
+            
+            showLoading("Entrando...");
+            errDiv.style.display = 'none';
+
+            try {
+                // 1. Tenta verificar existência (se permissão permitir)
+                try {
+                    const checkUser = await pb.collection('users').getList(1, 1, { 
+                        filter: `email="${loginInput}" || username="${loginInput}"` 
+                    });
+                    if (checkUser.totalItems === 0) {
+                        throw new Error("Email ou usuario não cadastrados");
+                    }
+                } catch (preCheckErr) {
+                    if (preCheckErr.message === "Email ou usuario não cadastrados") throw preCheckErr;
+                }
+
+                // 2. Tenta autenticar
+                await pb.collection('users').authWithPassword(loginInput, pass);
+                checkAuth();
+
+            } catch(err) {
+                console.error("Login Error:", err);
+                errDiv.style.display = 'block';
+                
+                if (err.message === "Email ou usuario não cadastrados") {
+                    errDiv.innerText = "Email ou usuário não cadastrados.";
+                } else if (err.status === 400) {
+                    errDiv.innerText = "Senha incorreta.";
+                } else {
+                    errDiv.innerText = "Erro ao conectar.";
+                }
+                pb.authStore.clear();
+            } finally {
+                hideLoading();
+            }
         }
+
         function logout() { pb.authStore.clear(); checkAuth(); }
+        
         async function checkAuth() {
             if(pb.authStore.isValid) {
                 document.getElementById('login-screen').classList.remove('active');
                 State.usuarioAtual = pb.authStore.model;
                 document.getElementById('user-display').innerText = State.usuarioAtual.name;
+                
+                if(State.usuarioAtual.avatar) {
+                    const avatarUrl = pb.files.getUrl(State.usuarioAtual, State.usuarioAtual.avatar);
+                    document.getElementById('user-avatar-display').innerHTML = `<img src="${avatarUrl}">`;
+                }
+
                 const perfil = State.usuarioAtual.perfil || 'admin';
                 
                 ['menu-aprovacao','menu-manutencao','menu-compras'].forEach(id => document.getElementById(id).classList.add('hidden'));
@@ -460,21 +544,41 @@
             } catch(e) { console.warn(e); }
         }
 
-        // --- STATUS ---
+        // --- STATUS & ADMIN NOTIFICATION ---
         async function calcularStatusGeral(acaoId) {
             try {
                 const mats = await pb.collection('materiais').getFullList({filter: `acao_vinculada="${acaoId}"`});
                 let novoStatus = 'Aguardando materiais';
+                let notificarAdmin = false;
+
                 if (mats.length > 0) {
                     const todosFim = mats.every(m => m.status_compra === 'Entregue' || m.status_compra === 'Cancelado');
-                    if(todosFim) novoStatus = 'Concluído'; 
-                    else novoStatus = 'Aguardando materiais';
+                    if(todosFim) {
+                        novoStatus = 'Concluído';
+                        notificarAdmin = true;
+                    } else {
+                        novoStatus = 'Aguardando materiais';
+                    }
                 }
+                
                 await pb.collection('acoes').update(acaoId, { status: novoStatus });
+
+                if (notificarAdmin) {
+                    const admins = await pb.collection('users').getFullList({filter: 'perfil="admin"'});
+                    for (let admin of admins) {
+                        await pb.collection('historico').create({
+                            acao_vinculada: acaoId,
+                            usuario: admin.id,
+                            mensagem: `Solicitação finalizada (Todos itens entregues)!`,
+                            tipo: 'sistema'
+                        });
+                    }
+                }
+
             } catch(e) { console.error(e); }
         }
         
-        // --- LOG/HISTORICO ---
+        // --- LOG ---
         async function registrarHistorico(acaoId, msg) {
             if(!acaoId || !State.usuarioAtual) return;
             try {
@@ -492,7 +596,7 @@
             const [r1, r2, r3] = await Promise.all([
                 safeRequest(pb.collection('acoes').getFullList({sort:'-created'})),
                 safeRequest(pb.collection('materiais').getFullList({sort:'-created', expand:'acao_vinculada'})),
-                safeRequest(pb.collection('historico').getList(1, 5, {sort:'-created'}))
+                safeRequest(pb.collection('historico').getList(1, 10, {sort:'-created'}))
             ]);
             
             State.dadosAcoes = r1.success ? r1.data : [];
@@ -625,11 +729,9 @@
         function renderTabelaCompras() {
             const tb=document.getElementById('tabela-compras'); tb.innerHTML='';
             const txt=document.getElementById('busca-compra').value.toLowerCase(); const st=document.getElementById('filtro-compra-status').value;
-            // UPDATE NA BUSCA: Inclui num_af
             State.dadosMateriais.filter(m=>(m.descricao+(m.expand?.acao_vinculada?.ordem_servico||'')+(m.num_af||'')).toLowerCase().includes(txt) && (!st || m.status_compra===st)).forEach(m=>{
                 const q = m.qtd_atendida || m.quantidade || 0; const t = (m.valor||0)*q;
                 let dt = m.data_entrega ? new Date(m.data_entrega).toLocaleDateString() : '-';
-                // UPDATE NA TABELA: Coluna AF
                 tb.innerHTML+=`<tr><td><span class="badge ${getBadgeClass(m.status_compra)}">${m.status_compra}</span></td><td style="font-weight:bold; color:var(--accent)">${m.num_af||'-'}</td><td><b>${m.descricao}</b><br><small>${m.codigo_item||''}</small></td><td>${m.fornecedor||'-'}</td><td>R$ ${t.toFixed(2)}</td><td>${dt}</td><td><button class="btn btn-sm btn-outline" onclick="abrirModalDetalhes('${m.acao_vinculada}')">📝 Detalhar</button></td></tr>`;
             });
         }
@@ -657,7 +759,6 @@
                     optionsHtml += `<option value="${opt}" ${selected}>${opt}</option>`;
                 });
 
-                // UPDATE NO LAYOUT DO CARD: Inclui AF
                 div.innerHTML += `<div class="mat-card">
                     <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
                         <span class="badge ${getBadgeClass(m.status_compra)}">${m.status_compra}</span>
@@ -687,7 +788,6 @@
         
         async function upMat(id,k,v) { 
             const d={}; d[k]=v; if(k=='data_entrega' && !v) d[k]=null; await pb.collection('materiais').update(id,d);
-            // UPDATE: Adicionado num_af para registrar no historico
             if(['status_compra','valor','qtd_atendida','num_af'].includes(k)) { 
                 const m=await pb.collection('materiais').getOne(id); 
                 await registrarHistorico(m.acao_vinculada, `alterou ${k} para ${v}`); 
@@ -720,7 +820,6 @@
             const t=document.getElementById('inp-titulo').value; const r=document.getElementById('inp-responsavel').value; 
             if(!t || !r) return showToast('Preencha título e responsável','error');
             
-            // Aqui estava o erro: objeto expandido corretamente
             const dadosSolicitacao = {
                 titulo: t,
                 descricao: document.getElementById('inp-descricao').value,
@@ -739,7 +838,6 @@
                 showToast('Criado!'); 
                 fecharModal('modal-criacao'); 
                 
-                // Limpa campos
                 document.getElementById('inp-titulo').value=''; 
                 document.getElementById('inp-descricao').value=''; 
                 document.getElementById('inp-os').value=''; 
@@ -773,6 +871,46 @@
             renderMateriaisModal(State.acaoAtualId);
         }
         
+        // --- PERFIL ---
+        function abrirPerfil() {
+            document.getElementById('modal-perfil').classList.add('active');
+        }
+        async function salvarPerfil() {
+            const fileInp = document.getElementById('perf-avatar');
+            const oldPass = document.getElementById('perf-old-pass').value;
+            const p1 = document.getElementById('perf-pass').value;
+            const p2 = document.getElementById('perf-pass-conf').value;
+            
+            const formData = new FormData();
+            let temMudanca = false;
+
+            if (p1 || p2) {
+                if (!oldPass) return showToast("Informe a Senha Atual para alterar.", 'error');
+                if (p1 !== p2) return showToast("Novas senhas não conferem.", 'error');
+                if (p1.length < 5) return showToast("Mínimo 5 caracteres.", 'error');
+                
+                formData.append('oldPassword', oldPass);
+                formData.append('password', p1);
+                formData.append('passwordConfirm', p2);
+                temMudanca = true;
+            }
+
+            if (fileInp.files[0]) {
+                formData.append('avatar', fileInp.files[0]);
+                temMudanca = true;
+            }
+
+            if (!temMudanca) return showToast("Nada alterado.");
+
+            const r = await safeRequest(pb.collection('users').update(State.usuarioAtual.id, formData), "Atualizando...");
+            
+            if (r.success) {
+                showToast("Perfil atualizado! Login necessário.");
+                document.getElementById('modal-perfil').classList.remove('active');
+                setTimeout(logout, 1500);
+            }
+        }
+
         // --- IMPORTS ---
         function prepararImportacao(inp) { 
             if(!inp.files[0])return; 
