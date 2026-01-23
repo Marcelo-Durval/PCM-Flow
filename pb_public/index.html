@@ -3,12 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PCM Flow | V15 Final</title>
+    <title>PCM Flow | V20 - Matriz Perfeita</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pocketbase/0.21.1/pocketbase.umd.min.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
@@ -74,28 +77,39 @@
         .data-table td { padding: 12px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; color: #334155; }
         .data-table tr:hover { background-color: #f8fafc; }
 
-        /* Badges */
+        /* Badges & Selects Table */
         .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; display: inline-block; white-space: nowrap; }
         
-        .st-cotacao { background: #fff7ed; color: #9a3412; border: 1px solid #fed7aa; }
-        .st-aprovacao { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
-        .st-aprovado { background: #faf5ff; color: #6b21a8; border: 1px solid #e9d5ff; }
-        .st-pagamento { background: #ccfbf1; color: #0f766e; border: 1px solid #99f6e4; }
-        .st-entrega { background: #f0f9ff; color: #0369a1; border: 1px solid #bae6fd; }
-        .st-entregue { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
-        
+        .status-select {
+            padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; border: 1px solid transparent; 
+            cursor: pointer; outline: none; width: 100%; max-width: 140px; appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat; background-position: right 5px center; background-size: 12px; padding-right: 25px;
+        }
+
+        /* Cores de Status */
+        .st-cotacao { background: #fff7ed; color: #9a3412; border-color: #fed7aa; }
+        .st-aprovacao { background: #eff6ff; color: #1e40af; border-color: #bfdbfe; }
+        .st-aprovado { background: #faf5ff; color: #6b21a8; border-color: #e9d5ff; }
+        .st-pagamento { background: #ccfbf1; color: #0f766e; border-color: #99f6e4; }
+        .st-entrega { background: #f0f9ff; color: #0369a1; border-color: #bae6fd; }
+        .st-entregue { background: #f0fdf4; color: #15803d; border-color: #bbf7d0; }
+        .st-cancelado { background: #fef2f2; color: #991b1b; border-color: #fecaca; }
+
         .bd-Alta { background: #fee2e2; color: #991b1b; } .bd-Média { background: #fef3c7; color: #92400e; } .bd-Baixa { background: #dcfce7; color: #166534; }
         
-        /* Novos status solicitação */
-        .sts-sem-mat { background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; }
-        .sts-em-exec { background: #dbeafe; color: #2563eb; border: 1px solid #93c5fd; }
-        .sts-concluido { background: #dcfce7; color: #16a34a; border: 1px solid #86efac; }
-        .sts-prog { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+        /* Filter Flags */
+        .filter-flags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 5px; }
+        .filter-check { display: flex; align-items: center; font-size: 0.8rem; cursor: pointer; user-select: none; background: white; border: 1px solid var(--border); padding: 5px 10px; border-radius: 20px; transition: 0.2s; }
+        .filter-check:hover { background: #f1f5f9; }
+        .filter-check input { margin-right: 6px; accent-color: var(--accent); }
+        .filter-check.active { border-color: var(--accent); color: var(--accent); background: #eff6ff; font-weight: 600; }
 
         /* Forms & Modals */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(2px); z-index: 2000; display: flex; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: all 0.2s; }
         .modal-overlay.active { opacity: 1; visibility: visible; }
         .modal-box { background: white; border-radius: 10px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden; width: 95%; max-width: 1100px; max-height: 95vh; }
+        .modal-large { max-width: 1400px; width: 98%; height: 95vh; }
         
         .form-control { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; transition: border 0.2s; }
         .form-control:focus { border-color: var(--accent); outline: none; }
@@ -104,6 +118,7 @@
         .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
         .btn-primary { background: var(--accent); color: white; } .btn-success { background: var(--success); color: white; } 
         .btn-outline { background: white; border: 1px solid #cbd5e1; color: var(--secondary); }
+        .btn-danger { background: var(--danger); color: white; }
 
         .mat-card { border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-bottom: 10px; background: white; }
         .mat-row { display: grid; grid-template-columns: repeat(12, 1fr); gap: 10px; align-items: end; margin-bottom: 5px; }
@@ -123,6 +138,47 @@
         .loading-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.9); z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; gap: 15px; }
         .spinner { width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Urgency Indicator in Table */
+        .urg-dot { height: 8px; width: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+        .urg-dot.Alta { background: #ef4444; box-shadow: 0 0 5px rgba(239,68,68,0.5); }
+        .urg-dot.Média { background: #f59e0b; }
+        .urg-dot.Baixa { background: #10b981; }
+
+        /* COTAÇÕES STYLES IMPROVED */
+        .cot-tabs { display: flex; gap: 10px; margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        .cot-tab { padding: 8px 16px; border-radius: 6px; cursor: pointer; color: var(--secondary); font-weight: 500; transition: 0.2s; }
+        .cot-tab.active { background: var(--accent); color: white; }
+        
+        .matrix-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        .matrix-table th { background: #f1f5f9; padding: 8px; border: 1px solid #e2e8f0; text-align: center; }
+        .matrix-table td { padding: 0; border: 1px solid #e2e8f0; vertical-align: middle; position: relative; }
+        
+        /* Nova Estrutura da Célula */
+        .cell-wrapper { display: flex; align-items: center; padding: 4px; gap: 5px; height: 100%; }
+        
+        .matrix-input { flex: 1; height: 32px; border: 1px solid transparent; padding: 0 5px; text-align: right; background: transparent; font-size: 0.9rem; border-radius: 4px; }
+        .matrix-input:focus { background: white; border-color: var(--accent); outline: none; }
+        
+        .selection-indicator {
+            width: 22px; height: 22px; border-radius: 50%; border: 2px solid #cbd5e1;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+            transition: 0.2s; background: white; flex-shrink: 0;
+        }
+        .selection-indicator:hover { border-color: var(--accent); background: #f0f9ff; }
+        
+        /* Estados da Célula */
+        .price-cell.winner { background: #dcfce7 !important; }
+        .price-cell.winner .selection-indicator { background: #16a34a; border-color: #16a34a; color: white; }
+        .price-cell.winner .selection-indicator::after { content: '✔'; font-size: 0.8rem; font-weight: bold; }
+        
+        .price-cell.loser { color: #991b1b; opacity: 0.8; }
+        .price-cell.suggestion { border: 2px solid #22c55e; }
+        
+        .forn-col-header { display: flex; flex-direction: column; gap: 4px; align-items: center; }
+        .pay-term-input { font-size: 0.7rem; border: 1px solid #cbd5e1; padding: 2px; border-radius: 4px; text-align: center; width: 90%; }
+        
+        .cotacao-tag { display: inline-block; background: #f3e8ff; color: #6b21a8; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; border: 1px solid #e9d5ff; font-weight: bold; margin-left: 5px; }
 
         @media (max-width: 1024px) { .charts-row { grid-template-columns: 1fr; } .chart-box { height: 300px; } }
         @media (max-width: 768px) {
@@ -164,6 +220,7 @@
         <div class="menu-item" id="menu-aprovacao" onclick="navegar('aprovacao')"><span>🛡️</span> Aprovação</div>
         <div class="menu-item" id="menu-manutencao" onclick="navegar('manutencao')"><span>🔧</span> Manutenção</div>
         <div class="menu-item" id="menu-compras" onclick="navegar('compras')"><span>🛒</span> Compras</div>
+        <div class="menu-item" id="menu-cotacoes" onclick="navegar('cotacoes')"><span>📝</span> Cotações</div>
         <div style="margin-top: auto; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
             <div style="font-size: 0.85rem; margin-bottom: 10px; color: #cbd5e1; display:flex; align-items:center; gap:8px; cursor:pointer;" onclick="abrirPerfil()" title="Editar Perfil">
                 <div class="user-avatar" id="user-avatar-display">U</div>
@@ -247,15 +304,106 @@
             </div>
 
             <div id="view-compras" class="hidden">
-                <div class="flex items-center gap-10" style="margin-bottom: 20px; flex-wrap: wrap;">
-                    <input type="text" id="busca-compra" placeholder="Buscar..." class="form-control" style="width: 250px;" onkeyup="renderTabelaCompras()">
-                    <select id="filtro-compra-status" class="form-control" style="width: 200px;" onchange="renderTabelaCompras()"></select>
+                <div style="margin-bottom: 20px;">
+                    <div class="flex items-center gap-10" style="flex-wrap: wrap; margin-bottom: 10px;">
+                        <input type="text" id="busca-compra" placeholder="Buscar SC, Item, AF..." class="form-control" style="width: 300px;" onkeyup="renderTabelaCompras()">
+                    </div>
+                    <div>
+                        <label class="form-label">Filtrar Status:</label>
+                        <div id="filter-flags-container" class="filter-flags">
+                            </div>
+                    </div>
                 </div>
                 <div class="table-container">
                     <table class="data-table">
-                        <thead><tr><th width="140">Status</th><th style="color:var(--accent)">AF</th><th>Descrição</th><th>Fornecedor</th><th>Total (R$)</th><th>Previsão</th><th width="100">Ação</th></tr></thead>
+                        <thead><tr><th width="160">Status</th><th width="120">SC / OS</th><th width="140">Cotação</th><th style="color:var(--accent)">AF</th><th>Descrição</th><th>Fornecedor</th><th>Total (R$)</th><th>Previsão</th><th width="100">Ação</th></tr></thead>
                         <tbody id="tabela-compras"></tbody>
                     </table>
+                </div>
+            </div>
+
+            <div id="view-cotacoes" class="hidden">
+                <div class="cot-tabs">
+                    <div class="cot-tab active" id="tab-pool" onclick="switchCotTab('pool')">📦 Pendentes (Pool)</div>
+                    <div class="cot-tab" id="tab-list" onclick="switchCotTab('list')">📑 Minhas Cotações</div>
+                </div>
+
+                <div id="cot-pool-content">
+                    <div style="background:white; padding:15px; border-radius:10px; border:1px solid var(--border); margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <h3 style="margin:0; color:var(--primary)">Consolidação de Compras</h3>
+                            <p style="color:var(--text-muted); font-size:0.85rem; margin:0;">Selecione os itens para criar um pacote de cotação.</p>
+                        </div>
+                        <button onclick="criarCotacaoEmMassa()" class="btn btn-primary">🚀 Criar Cotação com Selecionados</button>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead><tr><th width="40"><input type="checkbox" onchange="toggleAllPool(this)"></th><th>Urg.</th><th>SC / OS</th><th>Item</th><th>Qtd</th><th>Solicitante</th></tr></thead>
+                            <tbody id="tabela-pool"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="cot-list-content" class="hidden">
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead><tr><th>ID/Nº</th><th>Título</th><th>Status</th><th>Itens</th><th>Data Abertura</th><th>Ação</th></tr></thead>
+                            <tbody id="tabela-minhas-cotacoes"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-cotacao-master" class="modal-overlay" style="z-index: 2200;">
+        <div class="modal-box modal-large">
+            <div style="padding: 15px; background: #f8fafc; border-bottom: 1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <input type="text" id="cot-titulo-edit" class="form-control" style="font-weight:bold; font-size:1.1rem; width:400px;" placeholder="Título da Cotação">
+                    <small id="cot-id-display" style="color:var(--text-muted);">ID: --</small>
+                </div>
+                <div class="flex gap-10">
+                    <span id="cot-status-badge" class="badge">Aberta</span>
+                    <button onclick="fecharModal('modal-cotacao-master')" class="btn btn-outline">Fechar ✖</button>
+                </div>
+            </div>
+            
+            <div style="display:flex; flex:1; overflow:hidden;">
+                <div style="width: 280px; background: white; border-right: 1px solid var(--border); padding: 20px; display:flex; flex-direction:column; gap:20px; overflow-y:auto;">
+                    <div>
+                        <label class="form-label">Adicionar Fornecedor</label>
+                        <div class="flex gap-10">
+                            <input type="text" id="add-forn-input" class="form-control" placeholder="Nome...">
+                            <button onclick="adicionarFornecedorCot()" class="btn btn-primary">+</button>
+                        </div>
+                        <div id="lista-fornecedores-chips" style="display:flex; flex-wrap:wrap; gap:5px; margin-top:10px;"></div>
+                    </div>
+
+                    <div style="border-top:1px solid #e2e8f0; paddingTop:20px;">
+                        <button onclick="gerarPDFCotacao()" class="btn btn-outline w-full">📄 Baixar PDF para Envio</button>
+                        <p style="font-size:0.75rem; color:#64748b; margin-top:5px; text-align:center;">Gera PDF com os itens para enviar aos fornecedores.</p>
+                    </div>
+
+                    <div style="border-top:1px solid #e2e8f0; paddingTop:20px; margin-top:auto;">
+                        <button onclick="salvarCotacaoProgresso()" class="btn btn-outline w-full" style="margin-bottom:10px;">💾 Salvar Progresso</button>
+                        <button onclick="finalizarCotacaoTotal()" class="btn btn-success w-full">✅ Finalizar e Atualizar Sistema</button>
+                    </div>
+                </div>
+
+                <div style="flex:1; padding:20px; overflow:auto; background:#fdfdfd;">
+                    <div style="margin-bottom:15px; display:flex; justify-content:space-between; align-items:center;">
+                        <h4 style="margin:0;">Matriz Comparativa</h4>
+                        <div class="flex gap-10">
+                            <button onclick="aplicarMenorGlobal()" class="btn btn-sm btn-primary">🏆 Menor Global</button>
+                            <button onclick="aplicarMenorItem()" class="btn btn-sm btn-outline">💰 Menor por Item</button>
+                        </div>
+                    </div>
+                    
+                    <div class="table-container" style="max-height: calc(100vh - 200px);">
+                        <table class="matrix-table" id="tabela-matriz">
+                            </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -351,26 +499,12 @@
                 <label class="form-label">Alterar Foto</label>
                 <input type="file" id="perf-avatar" class="form-control" accept="image/*">
             </div>
-
             <div style="background:#f1f5f9; padding:15px; border-radius:8px; margin-bottom:20px;">
                 <h4 style="margin:0 0 10px 0; font-size:0.9rem;">Trocar Senha</h4>
-                
-                <div style="margin-bottom:10px;">
-                    <label class="form-label">Senha Atual (Obrigatório para troca)</label>
-                    <input type="password" id="perf-old-pass" class="form-control">
-                </div>
-
-                <div style="margin-bottom:10px;">
-                    <label class="form-label">Nova Senha</label>
-                    <input type="password" id="perf-pass" class="form-control">
-                </div>
-                
-                <div>
-                    <label class="form-label">Confirmar Nova Senha</label>
-                    <input type="password" id="perf-pass-conf" class="form-control">
-                </div>
+                <div style="margin-bottom:10px;"><label class="form-label">Senha Atual</label><input type="password" id="perf-old-pass" class="form-control"></div>
+                <div style="margin-bottom:10px;"><label class="form-label">Nova Senha</label><input type="password" id="perf-pass" class="form-control"></div>
+                <div><label class="form-label">Confirmar Nova Senha</label><input type="password" id="perf-pass-conf" class="form-control"></div>
             </div>
-
             <div class="flex gap-10">
                 <button onclick="fecharModal('modal-perfil')" class="btn btn-outline w-full">Cancelar</button>
                 <button onclick="salvarPerfil()" class="btn btn-success w-full">Salvar Alterações</button>
@@ -388,35 +522,50 @@
         const pb = new PocketBase(API_URL);
         pb.autoCancellation(false);
 
-        // LISTA DE STATUS
-        const STATUS_OPCOES = [
-            "Em cotação",
-            "Ag. aprovação",
-            "Aprovado",
-            "Ag. pagamento",
-            "Ag. entrega",
-            "Entregue",
-            "Cancelado"
-        ];
+        const STATUS_OPCOES = ["Em cotação", "Ag. aprovação", "Aprovado", "Ag. pagamento", "Ag. entrega", "Entregue", "Cancelado"];
 
         const State = {
             acaoAtualId: null, usuarioAtual: null,
-            dadosAcoes: [], dadosMateriais: [], dadosLogs: [],
+            dadosAcoes: [], dadosMateriais: [], dadosLogs: [], dadosCotacoes: [],
             filtroData: { start: null, end: null },
-            chartStatusInst: null, chartAgingInst: null, chartUrgenciaInst: null, calendarInst: null, cacheExcel: null, filteredMats: []
+            filtrosComprasSelecionados: [],
+            chartStatusInst: null, chartAgingInst: null, chartUrgenciaInst: null, calendarInst: null, cacheExcel: null, filteredMats: [],
+            // COTAÇÃO STATE
+            cotacaoAtiva: null, 
+            poolSelecionados: [],
+            mapaMaterialCotacao: {} // { matId: '23012026-01' }
         };
 
-        // --- INIT DATES ---
+        // --- INIT & SETUP ---
         function initDates() {
             const end = new Date(); const start = new Date(); start.setDate(start.getDate() - 30);
             document.getElementById('dash-end').valueAsDate = end;
             document.getElementById('dash-start').valueAsDate = start;
             State.filtroData.start = start; State.filtroData.end = end;
             
-            // Popula Filtro de Compras
-            const sel = document.getElementById('filtro-compra-status');
-            sel.innerHTML = '<option value="">Todos Status</option>';
-            STATUS_OPCOES.forEach(s => sel.innerHTML += `<option value="${s}">${s}</option>`);
+            const container = document.getElementById('filter-flags-container');
+            container.innerHTML = '';
+            State.filtrosComprasSelecionados = [];
+
+            STATUS_OPCOES.forEach(st => {
+                const isDefault = !['Entregue', 'Cancelado'].includes(st);
+                if(isDefault) State.filtrosComprasSelecionados.push(st);
+                const div = document.createElement('div');
+                div.className = `filter-check ${isDefault ? 'active' : ''}`;
+                div.innerHTML = `<input type="checkbox" value="${st}" ${isDefault?'checked':''} onchange="toggleFiltroFlag(this, '${st}')"> ${st}`;
+                container.appendChild(div);
+            });
+        }
+
+        function toggleFiltroFlag(el, status) {
+            if(el.checked) {
+                if(!State.filtrosComprasSelecionados.includes(status)) State.filtrosComprasSelecionados.push(status);
+                el.parentElement.classList.add('active');
+            } else {
+                State.filtrosComprasSelecionados = State.filtrosComprasSelecionados.filter(s => s !== status);
+                el.parentElement.classList.remove('active');
+            }
+            renderTabelaCompras();
         }
 
         // --- HELPERS ---
@@ -443,7 +592,6 @@
             c.appendChild(el); setTimeout(()=>el.classList.add('show'),10); setTimeout(()=>{el.classList.remove('show');setTimeout(()=>el.remove(),300)},4000);
         }
         
-        // CSS CLASSES
         function getBadgeClass(s) {
             if(!s) return 'badge';
             if(s.includes('otação')) return 'st-cotacao';
@@ -452,6 +600,7 @@
             if(s.includes('agamento')) return 'st-pagamento';
             if(s.includes('ntrega')) return 'st-entrega';
             if(s === 'Entregue') return 'st-entregue';
+            if(s === 'Cancelado') return 'st-cancelado';
             return 'badge';
         }
         function getActionStatusClass(s) {
@@ -462,162 +611,82 @@
             return 'badge';
         }
 
-        // --- MELHORIA LOGIN: Email OU Usuario ---
+        // --- AUTH ---
         async function fazerLogin() {
             const loginInput = document.getElementById('email').value.trim();
             const pass = document.getElementById('password').value;
-            const errDiv = document.getElementById('login-error-msg');
-            
-            showLoading("Entrando...");
-            errDiv.style.display = 'none';
-
             try {
-                // 1. Tenta verificar existência (se permissão permitir)
                 try {
-                    const checkUser = await pb.collection('users').getList(1, 1, { 
-                        filter: `email="${loginInput}" || username="${loginInput}"` 
-                    });
-                    if (checkUser.totalItems === 0) {
-                        throw new Error("Email ou usuario não cadastrados");
-                    }
-                } catch (preCheckErr) {
-                    if (preCheckErr.message === "Email ou usuario não cadastrados") throw preCheckErr;
-                }
-
-                // 2. Tenta autenticar
+                    const checkUser = await pb.collection('users').getList(1, 1, { filter: `email="${loginInput}" || username="${loginInput}"` });
+                    if (checkUser.totalItems === 0) throw new Error("Email ou usuario não cadastrados");
+                } catch (preCheckErr) { if (preCheckErr.message === "Email ou usuario não cadastrados") throw preCheckErr; }
                 await pb.collection('users').authWithPassword(loginInput, pass);
                 checkAuth();
-
             } catch(err) {
-                console.error("Login Error:", err);
-                errDiv.style.display = 'block';
-                
-                if (err.message === "Email ou usuario não cadastrados") {
-                    errDiv.innerText = "Email ou usuário não cadastrados.";
-                } else if (err.status === 400) {
-                    errDiv.innerText = "Senha incorreta.";
-                } else {
-                    errDiv.innerText = "Erro ao conectar.";
-                }
+                document.getElementById('login-error-msg').style.display='block';
+                document.getElementById('login-error-msg').innerText = err.message||"Erro";
                 pb.authStore.clear();
-            } finally {
-                hideLoading();
             }
         }
-
         function logout() { pb.authStore.clear(); checkAuth(); }
-        
         async function checkAuth() {
             if(pb.authStore.isValid) {
                 document.getElementById('login-screen').classList.remove('active');
                 State.usuarioAtual = pb.authStore.model;
                 document.getElementById('user-display').innerText = State.usuarioAtual.name;
-                
-                if(State.usuarioAtual.avatar) {
-                    const avatarUrl = pb.files.getUrl(State.usuarioAtual, State.usuarioAtual.avatar);
-                    document.getElementById('user-avatar-display').innerHTML = `<img src="${avatarUrl}">`;
-                }
-
+                if(State.usuarioAtual.avatar) document.getElementById('user-avatar-display').innerHTML = `<img src="${pb.files.getUrl(State.usuarioAtual, State.usuarioAtual.avatar)}">`;
                 const perfil = State.usuarioAtual.perfil || 'admin';
-                
-                ['menu-aprovacao','menu-manutencao','menu-compras'].forEach(id => document.getElementById(id).classList.add('hidden'));
+                ['menu-aprovacao','menu-manutencao','menu-compras','menu-cotacoes'].forEach(id => document.getElementById(id).classList.add('hidden'));
                 document.getElementById('menu-dashboard').classList.remove('hidden');
-
-                if(perfil === 'admin') { ['menu-aprovacao','menu-manutencao','menu-compras'].forEach(id => document.getElementById(id).classList.remove('hidden')); } 
+                if(perfil === 'admin') { ['menu-aprovacao','menu-manutencao','menu-compras','menu-cotacoes'].forEach(id => document.getElementById(id).classList.remove('hidden')); } 
                 else if(perfil === 'aprovador') { document.getElementById('menu-aprovacao').classList.remove('hidden'); navigating('aprovacao'); }
-                else if(perfil === 'operador') { document.getElementById('menu-compras').classList.remove('hidden'); navigating('compras'); }
+                else if(perfil === 'operador') { document.getElementById('menu-compras').classList.remove('hidden'); document.getElementById('menu-cotacoes').classList.remove('hidden'); navigating('compras'); }
                 else { document.getElementById('menu-manutencao').classList.remove('hidden'); navigating('dashboard'); }
-                
                 initDates();
                 await carregarSelectUsuarios();
                 carregarDadosAtuais(); 
                 iniciarRealtime(); 
             } else { document.getElementById('login-screen').classList.add('active'); }
         }
-
         async function carregarSelectUsuarios() {
-            try {
-                const r = await pb.collection('users').getFullList();
-                const s = document.getElementById('inp-responsavel'); 
-                s.innerHTML = '<option value="">Selecione...</option>';
-                r.forEach(u => s.innerHTML += `<option value="${u.id}">${u.name}</option>`);
-            } catch(e) { console.warn(e); }
+            try { const r = await pb.collection('users').getFullList(); const s = document.getElementById('inp-responsavel'); s.innerHTML = '<option value="">Selecione...</option>'; r.forEach(u => s.innerHTML += `<option value="${u.id}">${u.name}</option>`); } catch(e) { console.warn(e); }
         }
 
-        // --- STATUS & ADMIN NOTIFICATION ---
-        async function calcularStatusGeral(acaoId) {
-            try {
-                const mats = await pb.collection('materiais').getFullList({filter: `acao_vinculada="${acaoId}"`});
-                let novoStatus = 'Aguardando materiais';
-                let notificarAdmin = false;
-
-                if (mats.length > 0) {
-                    const todosFim = mats.every(m => m.status_compra === 'Entregue' || m.status_compra === 'Cancelado');
-                    if(todosFim) {
-                        novoStatus = 'Concluído';
-                        notificarAdmin = true;
-                    } else {
-                        novoStatus = 'Aguardando materiais';
-                    }
-                }
-                
-                await pb.collection('acoes').update(acaoId, { status: novoStatus });
-
-                if (notificarAdmin) {
-                    const admins = await pb.collection('users').getFullList({filter: 'perfil="admin"'});
-                    for (let admin of admins) {
-                        await pb.collection('historico').create({
-                            acao_vinculada: acaoId,
-                            usuario: admin.id,
-                            mensagem: `Solicitação finalizada (Todos itens entregues)!`,
-                            tipo: 'sistema'
-                        });
-                    }
-                }
-
-            } catch(e) { console.error(e); }
-        }
-        
-        // --- LOG ---
-        async function registrarHistorico(acaoId, msg) {
-            if(!acaoId || !State.usuarioAtual) return;
-            try {
-                await pb.collection('historico').create({
-                    acao_vinculada: acaoId,
-                    usuario: State.usuarioAtual.id,
-                    mensagem: msg,
-                    tipo: 'sistema'
-                });
-            } catch(e) { console.error("Erro hist:", e); }
-        }
-
-        // --- DADOS ---
+        // --- CORE DATA ---
         async function carregarDadosAtuais() {
-            const [r1, r2, r3] = await Promise.all([
+            const [r1, r2, r3, r4] = await Promise.all([
                 safeRequest(pb.collection('acoes').getFullList({sort:'-created'})),
                 safeRequest(pb.collection('materiais').getFullList({sort:'-created', expand:'acao_vinculada'})),
-                safeRequest(pb.collection('historico').getList(1, 10, {sort:'-created'}))
+                safeRequest(pb.collection('historico').getList(1, 10, {sort:'-created'})),
+                safeRequest(pb.collection('cotacoes').getFullList({sort:'-created'}))
             ]);
             
             State.dadosAcoes = r1.success ? r1.data : [];
             State.dadosMateriais = r2.success ? r2.data : [];
+            State.dadosCotacoes = r4.success ? r4.data : [];
             if(r3.success) { State.dadosLogs = r3.data.items; renderNotificacoes(); }
 
+            // Mapear Material -> Cotação ID (Sequencial)
+            State.mapaMaterialCotacao = {};
+            State.dadosCotacoes.forEach(cot => {
+                if (cot.status === 'Aberta' && cot.materiais_vinculados) {
+                    const numeroSeq = cot.titulo.split('|')[0].trim(); // Pega o "23012026-01" do titulo
+                    cot.materiais_vinculados.forEach(matId => {
+                        State.mapaMaterialCotacao[matId] = numeroSeq;
+                    });
+                }
+            });
+
             const tela = document.querySelector('.menu-item.active').id.replace('menu-','');
-            if(!document.getElementById('modal-detalhes').classList.contains('active')) navegar(tela);
+            if(!document.getElementById('modal-detalhes').classList.contains('active') && !document.getElementById('modal-cotacao-master').classList.contains('active')) navegar(tela);
         }
 
         function iniciarRealtime() {
-            pb.collection('materiais').subscribe('*', e => {
-                if(e.action === 'create') { showToast("🔔 Novo Material!"); document.getElementById('notif-badge').style.display = 'flex'; }
-                if(e.action === 'update' && e.record.status_compra==='Aprovado') showToast("✅ Aprovado!");
-                carregarDadosAtuais();
-            });
+            pb.collection('materiais').subscribe('*', () => carregarDadosAtuais());
             pb.collection('acoes').subscribe('*', () => carregarDadosAtuais());
-            pb.collection('historico').subscribe('*', () => carregarDadosAtuais());
+            pb.collection('cotacoes').subscribe('*', () => carregarDadosAtuais());
         }
 
-        // --- UI ---
         function toggleNotifDropdown() {
             const d = document.getElementById('notif-dropdown');
             d.classList.toggle('active');
@@ -632,18 +701,24 @@
                 list.innerHTML += `<div class="notif-item">${msg}<small>${dh}</small></div>`;
             });
         }
+
+        // --- NAVIGATION ---
         function navigating(t) { navegar(t); }
         function navegar(t) {
             document.querySelectorAll('.menu-item').forEach(i=>i.classList.remove('active'));
             document.getElementById('menu-'+t).classList.add('active');
-            ['dashboard','aprovacao','manutencao','compras'].forEach(v=>document.getElementById('view-'+v).classList.add('hidden'));
+            ['dashboard','aprovacao','manutencao','compras','cotacoes'].forEach(v=>document.getElementById('view-'+v).classList.add('hidden'));
             document.getElementById('view-'+t).classList.remove('hidden');
             if(window.innerWidth<=768) toggleSidebar();
             
-            if(t==='dashboard') renderDashboard();
+            if(t==='dashboard') {
+                 // Força um pequeno delay para garantir que o container esteja visivel antes de renderizar
+                 setTimeout(renderDashboard, 50); 
+            }
             if(t==='aprovacao') renderTabelaAprovacao();
             if(t==='manutencao') renderTabelaManutencao();
             if(t==='compras') renderTabelaCompras();
+            if(t==='cotacoes') renderViewCotacoes();
         }
         function toggleSidebar() { const sb=document.getElementById('sidebar'); sb.classList.toggle('active'); document.querySelector('.menu-overlay').style.display = sb.classList.contains('active')?'block':'none'; }
 
@@ -655,56 +730,496 @@
         }
         function renderDashboard() {
             const dStart = new Date(State.filtroData.start);
-            const dEnd = new Date(State.filtroData.end); 
-            dStart.setHours(0,0,0,0);
-            dEnd.setHours(23,59,59,999);
-
-            const matF = State.dadosMateriais.filter(m => {
-                const dt = new Date(m.created);
-                return dt >= dStart && dt <= dEnd;
-            });
+            const dEnd = new Date(State.filtroData.end); dStart.setHours(0,0,0,0); dEnd.setHours(23,59,59,999);
+            const matF = State.dadosMateriais.filter(m => { const dt = new Date(m.created); return dt >= dStart && dt <= dEnd; });
             State.filteredMats = matF;
 
             document.getElementById('kpi-os-aberta').innerText = State.dadosAcoes.filter(a=>a.status!=='Concluído').length;
             document.getElementById('kpi-aprovacao').innerText = matF.filter(m=>m.status_compra==='Ag. aprovação').length;
-            
             const val = matF.reduce((a,m)=>a+((m.valor||0)*(m.qtd_atendida||m.quantidade||0)),0);
             document.getElementById('kpi-valor-total').innerText = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(val);
-            
-            document.getElementById('kpi-urgencia-alta').innerText = matF.filter(m=>m.urgencia_material==='Alta' && m.status_compra!=='Entregue').length;
+            const countUrg = matF.filter(m => { const u = m.expand?.acao_vinculada?.urgencia || m.urgencia_material || 'Média'; return u === 'Alta' && m.status_compra !== 'Entregue'; }).length;
+            document.getElementById('kpi-urgencia-alta').innerText = countUrg;
 
+            // STATUS CHART
             const stC={}; matF.forEach(m=>stC[m.status_compra]=(stC[m.status_compra]||0)+1);
             if(State.chartStatusInst) State.chartStatusInst.destroy();
-            State.chartStatusInst=new Chart(document.getElementById('chartStatus'),{type:'doughnut',data:{labels:Object.keys(stC),datasets:[{data:Object.values(stC),backgroundColor:['#f59e0b','#3b82f6','#10b981','#0f766e','#0369a1','#15803d','#ef4444']}]},options:{responsive:true,maintainAspectRatio:false}});
+            const ctxStatus = document.getElementById('chartStatus');
+            if(ctxStatus) {
+                State.chartStatusInst=new Chart(ctxStatus,{type:'doughnut',data:{labels:Object.keys(stC),datasets:[{data:Object.values(stC),backgroundColor:['#f59e0b','#3b82f6','#10b981','#0f766e','#0369a1','#15803d','#ef4444']}]},options:{responsive:true,maintainAspectRatio:false}});
+            }
 
+            // AGING CHART
             const ag={'0-7d':0,'7-15d':0,'+15d':0};
             matF.forEach(m=>{ if(!['Entregue','Cancelado'].includes(m.status_compra)){ const d=Math.ceil(Math.abs(new Date()-new Date(m.created))/(86400000)); if(d<=7)ag['0-7d']++; else if(d<=15)ag['7-15d']++; else ag['+15d']++; }});
             if(State.chartAgingInst) State.chartAgingInst.destroy();
-            State.chartAgingInst=new Chart(document.getElementById('chartAging'),{type:'bar',data:{labels:Object.keys(ag),datasets:[{label:'Pendentes',data:Object.values(ag),backgroundColor:'#6366f1'}]},options:{responsive:true,maintainAspectRatio:false}});
+            const ctxAging = document.getElementById('chartAging');
+            if(ctxAging) {
+                State.chartAgingInst=new Chart(ctxAging,{type:'bar',data:{labels:Object.keys(ag),datasets:[{label:'Pendentes',data:Object.values(ag),backgroundColor:'#6366f1'}]},options:{responsive:true,maintainAspectRatio:false}});
+            }
 
-            const ur={'Alta':0,'Média':0,'Baixa':0}; matF.forEach(m=>{if(!['Entregue','Cancelado'].includes(m.status_compra)) ur[m.urgencia_material]=(ur[m.urgencia_material]||0)+1;});
-            if(State.chartUrgenciaInst) State.chartUrgenciaInst.destroy();
-            State.chartUrgenciaInst=new Chart(document.getElementById('chartUrgencia'),{type:'bar',data:{labels:Object.keys(ur),datasets:[{data:Object.values(ur),backgroundColor:['#ef4444','#f59e0b','#10b981']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
-
-            const evs = matF.filter(m=>m.data_entrega && !['Entregue','Cancelado'].includes(m.status_compra)).map(m=>({title:m.descricao,start:m.data_entrega.split('T')[0],backgroundColor:'#2563eb'}));
-            setTimeout(()=>{ if(!State.calendarInst) { State.calendarInst=new FullCalendar.Calendar(document.getElementById('calendar'),{initialView:'dayGridMonth',locale:'pt-br',height:'100%',events:evs}); State.calendarInst.render(); } else { State.calendarInst.removeAllEvents(); State.calendarInst.addEventSource(evs); State.calendarInst.render(); } },100);
-        }
-
-        // --- EXPORT ---
-        function exportarExcel() {
-            const data = State.filteredMats.map(m => {
-                const ac = m.expand?.acao_vinculada || {};
-                return {
-                    "Data Criação": new Date(m.created).toLocaleDateString(), "OS": ac.ordem_servico||'', "Item": m.descricao,
-                    "AF": m.num_af || '',
-                    "Qtd Orig": m.quantidade, "Qtd Atend": m.qtd_atendida||m.quantidade, "Valor Unit": m.valor, 
-                    "Total": (m.valor||0)*(m.qtd_atendida||m.quantidade), "Status": m.status_compra, "Fornecedor": m.fornecedor
-                };
+            // URGENCIA CHART
+            const ur={'Alta':0,'Média':0,'Baixa':0}; 
+            matF.forEach(m=>{
+                if(!['Entregue','Cancelado'].includes(m.status_compra)) {
+                    const u = m.expand?.acao_vinculada?.urgencia || m.urgencia_material || 'Média';
+                    ur[u]=(ur[u]||0)+1;
+                }
             });
-            const ws = XLSX.utils.json_to_sheet(data); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Filtrado"); XLSX.writeFile(wb,"PCM_Flow_Filtrado.xlsx");
+            if(State.chartUrgenciaInst) State.chartUrgenciaInst.destroy();
+            const ctxUrg = document.getElementById('chartUrgencia');
+            if(ctxUrg) {
+                State.chartUrgenciaInst=new Chart(ctxUrg,{type:'bar',data:{labels:Object.keys(ur),datasets:[{data:Object.values(ur),backgroundColor:['#ef4444','#f59e0b','#10b981']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+            }
+
+            // CALENDAR
+            const evs = matF.filter(m=>m.data_entrega && !['Entregue','Cancelado'].includes(m.status_compra)).map(m=>({title:m.descricao,start:m.data_entrega.split('T')[0],backgroundColor:'#2563eb'}));
+            const calEl = document.getElementById('calendar');
+            if(calEl) {
+                if(!State.calendarInst) { State.calendarInst=new FullCalendar.Calendar(calEl,{initialView:'dayGridMonth',locale:'pt-br',height:'100%',events:evs}); State.calendarInst.render(); } 
+                else { State.calendarInst.removeAllEvents(); State.calendarInst.addEventSource(evs); State.calendarInst.render(); }
+            }
         }
 
-        // --- TABELAS ---
+        // --- COTAÇÕES LOGIC ---
+        function switchCotTab(tab) {
+            document.querySelectorAll('.cot-tab').forEach(t=>t.classList.remove('active'));
+            document.getElementById('tab-'+tab).classList.add('active');
+            if(tab==='pool') { document.getElementById('cot-pool-content').classList.remove('hidden'); document.getElementById('cot-list-content').classList.add('hidden'); renderTabelaPool(); }
+            else { document.getElementById('cot-pool-content').classList.add('hidden'); document.getElementById('cot-list-content').classList.remove('hidden'); renderTabelaMinhasCotacoes(); }
+        }
+
+        function renderViewCotacoes() {
+            if(document.getElementById('tab-pool').classList.contains('active')) renderTabelaPool(); else renderTabelaMinhasCotacoes();
+        }
+
+        function renderTabelaPool() {
+            const tb = document.getElementById('tabela-pool'); tb.innerHTML = '';
+            const itensEmCotacaoAberta = [];
+            State.dadosCotacoes.forEach(c => {
+                if(c.status === 'Aberta' && c.materiais_vinculados) {
+                    c.materiais_vinculados.forEach(id => itensEmCotacaoAberta.push(id));
+                }
+            });
+
+            const pendentes = State.dadosMateriais.filter(m => 
+                m.status_compra === 'Em cotação' && !itensEmCotacaoAberta.includes(m.id)
+            );
+
+            if(pendentes.length === 0) { tb.innerHTML='<tr><td colspan="6" style="text-align:center; padding:20px;">Nenhum item pendente para cotação.</td></tr>'; return; }
+
+            pendentes.forEach(m => {
+                const urg = m.expand?.acao_vinculada?.urgencia || 'Média';
+                const solicitante = m.expand?.acao_vinculada?.responsavel ? (State.dadosAcoes.find(a=>a.id===m.acao_vinculada)?.expand?.responsavel?.name || 'User') : '-';
+                const idDisplay = m.expand?.acao_vinculada?.numero_sc ? `SC: ${m.expand.acao_vinculada.numero_sc}` : (m.expand?.acao_vinculada?.ordem_servico ? `OS: ${m.expand.acao_vinculada.ordem_servico}` : '');
+
+                tb.innerHTML += `
+                    <tr>
+                        <td style="text-align:center;"><input type="checkbox" class="pool-check" value="${m.id}"></td>
+                        <td><span class="urg-dot ${urg}"></span> ${urg}</td>
+                        <td style="font-weight:bold;">${idDisplay}</td>
+                        <td>${m.descricao} <small style="color:#64748b">(${m.codigo_item||''})</small></td>
+                        <td>${m.quantidade}</td>
+                        <td>${solicitante}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function toggleAllPool(el) {
+            document.querySelectorAll('.pool-check').forEach(c => c.checked = el.checked);
+        }
+
+        async function criarCotacaoEmMassa() {
+            const checks = document.querySelectorAll('.pool-check:checked');
+            if(checks.length === 0) return showToast('Selecione pelo menos um item', 'error');
+            
+            const ids = Array.from(checks).map(c => c.value);
+            
+            // LÓGICA DE ID SEQUENCIAL DIÁRIO (Ex: 23012026-01)
+            const today = new Date();
+            const todayStr = today.toLocaleDateString('pt-BR').replace(/\//g, ''); // 23012026
+            
+            // Conta quantas cotações foram criadas hoje
+            const countToday = State.dadosCotacoes.filter(c => {
+                const d = new Date(c.created).toLocaleDateString('pt-BR').replace(/\//g, '');
+                return d === todayStr;
+            }).length + 1;
+
+            const seq = countToday.toString().padStart(2, '0');
+            const novoIdVisual = `${todayStr}-${seq}`;
+            const tituloFinal = `${novoIdVisual} | Cotação Natural da Vaca`;
+
+            const novaCotacao = {
+                titulo: tituloFinal,
+                status: 'Aberta',
+                fornecedores: [],
+                condicoes_pagamento: {},
+                mapa_precos: {},
+                vencedores: {},
+                materiais_vinculados: ids
+            };
+
+            const r = await safeRequest(pb.collection('cotacoes').create(novaCotacao), 'Criando cotação...');
+            if(r.success) {
+                showToast(`Cotação ${novoIdVisual} criada!`);
+                switchCotTab('list');
+                abrirModalCotacao(r.data.id);
+                carregarDadosAtuais(); // Atualiza para gerar mapa na tela de compras
+            }
+        }
+
+        function renderTabelaMinhasCotacoes() {
+            const tb = document.getElementById('tabela-minhas-cotacoes'); tb.innerHTML = '';
+            State.dadosCotacoes.forEach(c => {
+                const qtd = c.materiais_vinculados ? c.materiais_vinculados.length : 0;
+                let stClass = 'badge';
+                if(c.status === 'Aberta') stClass = 'st-cotacao';
+                if(c.status === 'Fechada') stClass = 'st-aprovado';
+                if(c.status === 'Cancelada') stClass = 'st-cancelado';
+
+                // Extrair ID visual do título se existir
+                const displayTitle = c.titulo.includes('|') ? c.titulo.split('|')[0] : c.id.substring(0,8);
+                const realTitle = c.titulo.includes('|') ? c.titulo.split('|')[1] : c.titulo;
+
+                tb.innerHTML += `
+                    <tr>
+                        <td style="font-weight:bold; color:var(--primary);">${displayTitle}</td>
+                        <td>${realTitle}</td>
+                        <td><span class="${stClass}">${c.status}</span></td>
+                        <td>${qtd} itens</td>
+                        <td>${new Date(c.created).toLocaleDateString()}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline" onclick="abrirModalCotacao('${c.id}')" title="Editar">✏️</button>
+                            <button class="btn btn-sm btn-danger" onclick="excluirCotacao('${c.id}')" title="Excluir">🗑️</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+        
+        async function excluirCotacao(id) {
+            if(!confirm('Tem certeza que deseja excluir esta cotação? Os itens voltarão para o Pool.')) return;
+            await safeRequest(pb.collection('cotacoes').delete(id), 'Excluindo...');
+            showToast('Cotação excluída.');
+            carregarDadosAtuais();
+        }
+
+        // --- MODAL COTAÇÃO MASTER ---
+        async function abrirModalCotacao(id) {
+            const cot = State.dadosCotacoes.find(c => c.id === id);
+            if(!cot) return;
+            State.cotacaoAtiva = JSON.parse(JSON.stringify(cot)); // Deep copy to edit
+            
+            document.getElementById('modal-cotacao-master').classList.add('active');
+            document.getElementById('cot-titulo-edit').value = State.cotacaoAtiva.titulo;
+            
+            // Extrair ID visual
+            const visualId = State.cotacaoAtiva.titulo.includes('|') ? State.cotacaoAtiva.titulo.split('|')[0] : 'ID: ' + State.cotacaoAtiva.id;
+            document.getElementById('cot-id-display').innerText = visualId;
+            document.getElementById('cot-status-badge').innerText = State.cotacaoAtiva.status;
+
+            renderChipsFornecedores();
+            renderMatrizPrecos();
+        }
+
+        function renderChipsFornecedores() {
+            const div = document.getElementById('lista-fornecedores-chips'); div.innerHTML = '';
+            const forns = State.cotacaoAtiva.fornecedores || [];
+            forns.forEach(f => {
+                div.innerHTML += `<div style="background:#eff6ff; color:#1e40af; padding:4px 8px; border-radius:12px; font-size:0.8rem; display:flex; align-items:center; gap:5px; border:1px solid #bfdbfe;">
+                    ${f} <span style="cursor:pointer; font-weight:bold;" onclick="removerFornecedorCot('${f}')">&times;</span>
+                </div>`;
+            });
+        }
+
+        function adicionarFornecedorCot() {
+            const inp = document.getElementById('add-forn-input');
+            const nome = inp.value.trim();
+            if(!nome) return;
+            if(!State.cotacaoAtiva.fornecedores) State.cotacaoAtiva.fornecedores = [];
+            if(!State.cotacaoAtiva.fornecedores.includes(nome)) {
+                State.cotacaoAtiva.fornecedores.push(nome);
+                renderChipsFornecedores();
+                renderMatrizPrecos();
+            }
+            inp.value = '';
+        }
+
+        function removerFornecedorCot(nome) {
+            if(!confirm('Remover fornecedor e seus preços?')) return;
+            State.cotacaoAtiva.fornecedores = State.cotacaoAtiva.fornecedores.filter(f => f !== nome);
+            renderChipsFornecedores();
+            renderMatrizPrecos();
+        }
+
+        // --- MATRIZ V20: CÉLULA REFORMULADA ---
+        function renderMatrizPrecos() {
+            const tb = document.getElementById('tabela-matriz'); tb.innerHTML = '';
+            const forns = State.cotacaoAtiva.fornecedores || [];
+            const itens = State.dadosMateriais.filter(m => State.cotacaoAtiva.materiais_vinculados.includes(m.id));
+            const mapa = State.cotacaoAtiva.mapa_precos || {};
+            const condicoes = State.cotacaoAtiva.condicoes_pagamento || {};
+            const vencedores = State.cotacaoAtiva.vencedores || {};
+
+            let headerHTML = `<tr><th style="text-align:left; min-width:200px;">Produto</th>`;
+            forns.forEach(f => {
+                const cond = condicoes[f] || '';
+                headerHTML += `<th>
+                    <div class="forn-col-header">
+                        <span>${f}</span>
+                        <input type="text" class="pay-term-input" placeholder="Cond. Pagto" value="${cond}" onblur="atualizarCondPagto('${f}', this.value)">
+                    </div>
+                </th>`;
+            });
+            headerHTML += `</tr>`;
+            tb.innerHTML = headerHTML;
+
+            itens.forEach(item => {
+                let menor = Infinity; let maior = -Infinity;
+                forns.forEach(f => {
+                    const val = (mapa[item.id] && mapa[item.id][f]) ? parseFloat(mapa[item.id][f]) : null;
+                    if(val !== null) {
+                        if(val < menor) menor = val;
+                        if(val > maior) maior = val;
+                    }
+                });
+
+                let rowHTML = `<tr>
+                    <td style="padding:8px;"><b>${item.descricao}</b><br><small>Qtd: ${item.quantidade}</small></td>`;
+                
+                forns.forEach(f => {
+                    const val = (mapa[item.id] && mapa[item.id][f]) ? mapa[item.id][f] : '';
+                    let classes = 'price-cell';
+                    if(val && parseFloat(val) === menor) classes += ' suggestion'; 
+                    if(vencedores[item.id] === f) classes += ' winner'; 
+                    else if(vencedores[item.id] && vencedores[item.id] !== f) classes += ' loser'; 
+
+                    // NOVA ESTRUTURA V20: WRAPPER COM INPUT E BOTÃO DE SELEÇÃO SEPARADOS
+                    rowHTML += `<td class="${classes}">
+                        <div class="cell-wrapper">
+                            <input type="number" step="0.01" class="matrix-input" value="${val}" placeholder="R$" 
+                                onchange="atualizarPreco('${item.id}', '${f}', this.value)">
+                            <div class="selection-indicator" onclick="selecionarVencedorManual('${item.id}', '${f}')"></div>
+                        </div>
+                    </td>`;
+                });
+                rowHTML += `</tr>`;
+                tb.innerHTML += rowHTML;
+            });
+
+            let footerHTML = `<tr><td style="text-align:right; font-weight:bold; padding:8px;">TOTAL:</td>`;
+            forns.forEach(f => {
+                let total = 0;
+                itens.forEach(item => {
+                    const val = (mapa[item.id] && mapa[item.id][f]) ? parseFloat(mapa[item.id][f]) : 0;
+                    total += val * (item.quantidade || 1);
+                });
+                footerHTML += `<td style="text-align:center; font-weight:bold;">R$ ${total.toFixed(2)}</td>`;
+            });
+            footerHTML += `</tr>`;
+            tb.innerHTML += footerHTML;
+        }
+
+        function atualizarPreco(itemId, forn, val) {
+            if(!State.cotacaoAtiva.mapa_precos) State.cotacaoAtiva.mapa_precos = {};
+            if(!State.cotacaoAtiva.mapa_precos[itemId]) State.cotacaoAtiva.mapa_precos[itemId] = {};
+            State.cotacaoAtiva.mapa_precos[itemId][forn] = val ? parseFloat(val) : null;
+            renderMatrizPrecos();
+        }
+
+        function atualizarCondPagto(forn, val) {
+            if(!State.cotacaoAtiva.condicoes_pagamento) State.cotacaoAtiva.condicoes_pagamento = {};
+            State.cotacaoAtiva.condicoes_pagamento[forn] = val;
+        }
+
+        function selecionarVencedorManual(itemId, forn) {
+            if(!State.cotacaoAtiva.vencedores) State.cotacaoAtiva.vencedores = {};
+            if(State.cotacaoAtiva.vencedores[itemId] === forn) delete State.cotacaoAtiva.vencedores[itemId];
+            else State.cotacaoAtiva.vencedores[itemId] = forn;
+            renderMatrizPrecos();
+        }
+
+        function aplicarMenorGlobal() {
+            const forns = State.cotacaoAtiva.fornecedores || [];
+            const itens = State.dadosMateriais.filter(m => State.cotacaoAtiva.materiais_vinculados.includes(m.id));
+            const mapa = State.cotacaoAtiva.mapa_precos || {};
+            let melhorForn = null; let menorTotal = Infinity;
+            forns.forEach(f => {
+                let total = 0;
+                itens.forEach(item => {
+                    const val = (mapa[item.id] && mapa[item.id][f]) ? parseFloat(mapa[item.id][f]) : 0;
+                    total += val * (item.quantidade || 1);
+                });
+                if(total > 0 && total < menorTotal) { menorTotal = total; melhorForn = f; }
+            });
+            if(melhorForn) {
+                if(!State.cotacaoAtiva.vencedores) State.cotacaoAtiva.vencedores = {};
+                itens.forEach(item => State.cotacaoAtiva.vencedores[item.id] = melhorForn);
+                renderMatrizPrecos();
+                showToast(`Vencedor Global: ${melhorForn}`);
+            } else { showToast('Preencha os preços primeiro', 'error'); }
+        }
+
+        function aplicarMenorItem() {
+            const forns = State.cotacaoAtiva.fornecedores || [];
+            const itens = State.dadosMateriais.filter(m => State.cotacaoAtiva.materiais_vinculados.includes(m.id));
+            const mapa = State.cotacaoAtiva.mapa_precos || {};
+            if(!State.cotacaoAtiva.vencedores) State.cotacaoAtiva.vencedores = {};
+            itens.forEach(item => {
+                let menor = Infinity; let fornMenor = null;
+                forns.forEach(f => {
+                    const val = (mapa[item.id] && mapa[item.id][f]) ? parseFloat(mapa[item.id][f]) : null;
+                    if(val !== null && val < menor) { menor = val; fornMenor = f; }
+                });
+                if(fornMenor) State.cotacaoAtiva.vencedores[item.id] = fornMenor;
+            });
+            renderMatrizPrecos();
+            showToast('Menores preços por item aplicados');
+        }
+
+        async function salvarCotacaoProgresso() {
+            State.cotacaoAtiva.titulo = document.getElementById('cot-titulo-edit').value;
+            await safeRequest(pb.collection('cotacoes').update(State.cotacaoAtiva.id, State.cotacaoAtiva), 'Salvando...');
+            showToast('Progresso salvo!');
+            carregarDadosAtuais();
+        }
+
+        async function finalizarCotacaoTotal() {
+            if(!confirm('Deseja finalizar a cotação? Isso atualizará os preços e status dos itens no sistema.')) return;
+            const itens = State.dadosMateriais.filter(m => State.cotacaoAtiva.materiais_vinculados.includes(m.id));
+            const mapa = State.cotacaoAtiva.mapa_precos || {};
+            const vencedores = State.cotacaoAtiva.vencedores || {};
+            
+            showLoading('Finalizando...');
+            try {
+                for (const item of itens) {
+                    const vencedor = vencedores[item.id];
+                    if(vencedor) {
+                        const preco = mapa[item.id][vencedor];
+                        await pb.collection('materiais').update(item.id, {
+                            valor: preco,
+                            fornecedor: vencedor,
+                            status_compra: 'Ag. aprovação'
+                        });
+                        await registrarHistorico(item.acao_vinculada, `Cotação ${State.cotacaoAtiva.titulo}: Item fechado com ${vencedor} a R$ ${preco}`);
+                        await calcularStatusGeral(item.acao_vinculada);
+                    }
+                }
+                State.cotacaoAtiva.titulo = document.getElementById('cot-titulo-edit').value;
+                State.cotacaoAtiva.status = 'Fechada';
+                await pb.collection('cotacoes').update(State.cotacaoAtiva.id, State.cotacaoAtiva);
+                showToast('Cotação Finalizada com Sucesso!');
+                fecharModal('modal-cotacao-master');
+                carregarDadosAtuais();
+            } catch(e) {
+                console.error(e);
+                showToast('Erro ao finalizar', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function gerarPDFCotacao() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            const visualId = State.cotacaoAtiva.titulo.split('|')[0].trim();
+            const realTitle = State.cotacaoAtiva.titulo.split('|')[1]?.trim() || State.cotacaoAtiva.titulo;
+
+            doc.setFontSize(18); doc.text("Solicitação de Cotação", 14, 20);
+            doc.setFontSize(10);
+            doc.text(`Cotação N°: ${visualId}`, 14, 30);
+            doc.text(`Data: ${new Date().toLocaleDateString()}`, 14, 35);
+            doc.text(`Referência: ${realTitle}`, 14, 40);
+
+            const itens = State.dadosMateriais.filter(m => State.cotacaoAtiva.materiais_vinculados.includes(m.id));
+            const tableData = itens.map(m => [ m.codigo_item || '-', m.descricao, m.quantidade.toString(), "__________", "__________" ]);
+
+            doc.autoTable({
+                startY: 50,
+                head: [['Código', 'Descrição', 'Qtd', 'Valor Unit. (R$)', 'Prazo Entrega']],
+                body: tableData,
+                theme: 'grid',
+                headStyles: { fillColor: [15, 23, 42] }
+            });
+
+            doc.text("Condições Gerais:", 14, doc.lastAutoTable.finalY + 10);
+            doc.text("Pagamento: ______________________   Frete: ______________________", 14, doc.lastAutoTable.finalY + 20);
+            doc.save(`Cotacao_${visualId}.pdf`);
+        }
+
+        // --- MANUTENCAO & COMPRAS (MANTIDOS) ---
+        function renderTabelaCompras() {
+            const tb = document.getElementById('tabela-compras'); tb.innerHTML='';
+            const txt = document.getElementById('busca-compra').value.toLowerCase();
+            const listaFiltrada = State.dadosMateriais.filter(m => {
+                const matchText = (m.descricao + (m.expand?.acao_vinculada?.ordem_servico||'') + (m.num_af||'') + (m.expand?.acao_vinculada?.numero_sc||'') + (m.expand?.acao_vinculada?.id||'')).toLowerCase().includes(txt);
+                const matchStatus = State.filtrosComprasSelecionados.includes(m.status_compra);
+                return matchText && matchStatus;
+            });
+
+            if(listaFiltrada.length === 0) { tb.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:20px;">Nenhum item encontrado.</td></tr>'; return; }
+
+            listaFiltrada.forEach(m => {
+                const q = m.qtd_atendida || m.quantidade || 0; 
+                const t = (m.valor||0)*q;
+                let dt = m.data_entrega ? new Date(m.data_entrega).toLocaleDateString() : '-';
+                let urgencia = m.expand?.acao_vinculada?.urgencia || m.urgencia_material || 'Média';
+                let urgHtml = `<span class="urg-dot ${urgencia}" title="Urgência ${urgencia}"></span>`;
+                let selectHtml = `<select class="status-select ${getBadgeClass(m.status_compra)}" onchange="atualizarStatusRapido('${m.id}', this.value)">`;
+                STATUS_OPCOES.forEach(opt => { selectHtml += `<option value="${opt}" ${m.status_compra === opt ? 'selected' : ''}>${opt}</option>`; });
+                selectHtml += `</select>`;
+                const acao = m.expand?.acao_vinculada || {};
+                let idDisplay = acao.numero_sc ? `<span style="font-weight:700;">SC: ${acao.numero_sc}</span>` : (acao.ordem_servico ? `OS: ${acao.ordem_servico}` : `<small>ID: ${acao.id?.substring(0,8)}</small>`);
+
+                // COLUNA COTAÇÃO
+                let cotacaoDisplay = '-';
+                if (State.mapaMaterialCotacao[m.id]) {
+                    cotacaoDisplay = `<span class="cotacao-tag">${State.mapaMaterialCotacao[m.id]}</span>`;
+                }
+
+                tb.innerHTML += `<tr>
+                    <td>${selectHtml}</td>
+                    <td>${urgHtml} ${idDisplay}</td>
+                    <td>${cotacaoDisplay}</td>
+                    <td style="font-weight:bold; color:var(--accent)">${m.num_af||'-'}</td>
+                    <td><b>${m.descricao}</b><br><small>${m.codigo_item||''}</small></td>
+                    <td>${m.fornecedor||'-'}</td><td>R$ ${t.toFixed(2)}</td><td>${dt}</td>
+                    <td><button class="btn btn-sm btn-outline" onclick="abrirModalDetalhes('${m.acao_vinculada}')">📝 Detalhar</button></td>
+                </tr>`;
+            });
+        }
+        async function atualizarStatusRapido(id, novoStatus) {
+            try { const mat = State.dadosMateriais.find(m => m.id === id); if(!mat) return; await pb.collection('materiais').update(id, { status_compra: novoStatus }); await registrarHistorico(mat.acao_vinculada, `alterou status do item ${mat.descricao} para ${novoStatus} (via Macro)`); await calcularStatusGeral(mat.acao_vinculada); showToast(`Atualizado para ${novoStatus}`); } catch(e) { showToast("Erro", "error"); }
+        }
+
+        // --- CALCULO STATUS E HISTORICO ---
+        async function calcularStatusGeral(acaoId) {
+            try {
+                const mats = await pb.collection('materiais').getFullList({filter: `acao_vinculada="${acaoId}"`});
+                let novoStatus = 'Aguardando materiais';
+                if (mats.length > 0) {
+                    const todosFim = mats.every(m => m.status_compra === 'Entregue' || m.status_compra === 'Cancelado');
+                    if(todosFim) novoStatus = 'Concluído';
+                }
+                await pb.collection('acoes').update(acaoId, { status: novoStatus });
+            } catch(e) { console.error(e); }
+        }
+        async function registrarHistorico(acaoId, msg) {
+            if(!acaoId || !State.usuarioAtual) return;
+            try { await pb.collection('historico').create({ acao_vinculada: acaoId, usuario: State.usuarioAtual.id, mensagem: msg, tipo: 'sistema' }); } catch(e) {}
+        }
+
+        // --- OUTRAS FUNCOES REUTILIZADAS ---
+        function renderTabelaManutencao() {
+            const tb=document.getElementById('tabela-manutencao'); tb.innerHTML='';
+            const txt=document.getElementById('busca-manut').value.toLowerCase(); const urg=document.getElementById('filtro-manut-urg').value;
+            State.dadosAcoes.filter(a=>(a.titulo+a.ordem_servico).toLowerCase().includes(txt) && (!urg || a.urgencia===urg)).forEach(a=>{
+                let badgeStatus = getActionStatusClass(a.status);
+                tb.innerHTML+=`<tr><td>${a.ordem_servico||'-'}</td><td><b>${a.titulo}</b></td><td><span class="badge ${badgeStatus}">${a.status||'Aberto'}</span></td><td>${a.categoria}</td><td><span class="badge bd-${a.urgencia}">${a.urgencia}</span></td><td>${new Date(a.created).toLocaleDateString()}</td><td><button class="btn btn-sm btn-outline" onclick="abrirModalDetalhes('${a.id}')">Ver</button></td></tr>`;
+            });
+        }
         function renderTabelaAprovacao() {
             const tb = document.getElementById('tabela-aprovacao'); tb.innerHTML='';
             const data = State.dadosMateriais.filter(m => m.status_compra === 'Ag. aprovação');
@@ -717,34 +1232,8 @@
         }
         async function decidir(id, s) { if(!confirm(`Confirma ${s}?`))return; await safeRequest(pb.collection('materiais').update(id,{status_compra:s})); const i=State.dadosMateriais.find(x=>x.id===id); await registrarHistorico(i.acao_vinculada, `definiu status: ${s}`); await calcularStatusGeral(i.acao_vinculada); showToast('Feito!'); }
 
-        function renderTabelaManutencao() {
-            const tb=document.getElementById('tabela-manutencao'); tb.innerHTML='';
-            const txt=document.getElementById('busca-manut').value.toLowerCase(); const urg=document.getElementById('filtro-manut-urg').value;
-            State.dadosAcoes.filter(a=>(a.titulo+a.ordem_servico).toLowerCase().includes(txt) && (!urg || a.urgencia===urg)).forEach(a=>{
-                let badgeStatus = getActionStatusClass(a.status);
-                tb.innerHTML+=`<tr><td>${a.ordem_servico||'-'}</td><td><b>${a.titulo}</b></td><td><span class="badge ${badgeStatus}">${a.status||'Aberto'}</span></td><td>${a.categoria}</td><td><span class="badge bd-${a.urgencia}">${a.urgencia}</span></td><td>${new Date(a.created).toLocaleDateString()}</td><td><button class="btn btn-sm btn-outline" onclick="abrirModalDetalhes('${a.id}')">Ver</button></td></tr>`;
-            });
-        }
-
-        function renderTabelaCompras() {
-            const tb=document.getElementById('tabela-compras'); tb.innerHTML='';
-            const txt=document.getElementById('busca-compra').value.toLowerCase(); const st=document.getElementById('filtro-compra-status').value;
-            State.dadosMateriais.filter(m=>(m.descricao+(m.expand?.acao_vinculada?.ordem_servico||'')+(m.num_af||'')).toLowerCase().includes(txt) && (!st || m.status_compra===st)).forEach(m=>{
-                const q = m.qtd_atendida || m.quantidade || 0; const t = (m.valor||0)*q;
-                let dt = m.data_entrega ? new Date(m.data_entrega).toLocaleDateString() : '-';
-                tb.innerHTML+=`<tr><td><span class="badge ${getBadgeClass(m.status_compra)}">${m.status_compra}</span></td><td style="font-weight:bold; color:var(--accent)">${m.num_af||'-'}</td><td><b>${m.descricao}</b><br><small>${m.codigo_item||''}</small></td><td>${m.fornecedor||'-'}</td><td>R$ ${t.toFixed(2)}</td><td>${dt}</td><td><button class="btn btn-sm btn-outline" onclick="abrirModalDetalhes('${m.acao_vinculada}')">📝 Detalhar</button></td></tr>`;
-            });
-        }
-
-        // --- MODAL & EDITOR (PADRONIZADO) ---
-        async function abrirModalDetalhes(id) {
-            State.acaoAtualId=id; document.getElementById('modal-detalhes').classList.add('active');
-            const r=await safeRequest(pb.collection('acoes').getOne(id));
-            if(r.success) { document.getElementById('edit-titulo').value=r.data.titulo; document.getElementById('edit-os').value=r.data.ordem_servico; document.getElementById('edit-sc').value=r.data.numero_sc; }
-            renderMateriaisModal(id); renderChat(id);
-        }
+        async function abrirModalDetalhes(id) { State.acaoAtualId=id; document.getElementById('modal-detalhes').classList.add('active'); const r=await safeRequest(pb.collection('acoes').getOne(id)); if(r.success) { document.getElementById('edit-titulo').value=r.data.titulo; document.getElementById('edit-os').value=r.data.ordem_servico; document.getElementById('edit-sc').value=r.data.numero_sc; } renderMateriaisModal(id); renderChat(id); }
         async function atualizarCabecalho() { await safeRequest(pb.collection('acoes').update(State.acaoAtualId,{titulo:document.getElementById('edit-titulo').value,ordem_servico:document.getElementById('edit-os').value,numero_sc:document.getElementById('edit-sc').value})); await registrarHistorico(State.acaoAtualId, `atualizou cabeçalho.`); showToast('Salvo'); }
-        
         async function renderMateriaisModal(id) {
             const div=document.getElementById('lista-materiais-modal'); div.innerHTML='...';
             const r=await safeRequest(pb.collection('materiais').getFullList({filter:`acao_vinculada="${id}"`,sort:'-created'}));
@@ -752,225 +1241,42 @@
             if(r.success) r.data.forEach(m=>{
                 const qo=m.quantidade||0; const qa=m.qtd_atendida||qo; const saldo=qo-qa; const tot=(m.valor||0)*qa;
                 const dt = m.data_entrega && m.data_entrega.length>=10 ? m.data_entrega.substring(0,10) : '';
-                
-                let optionsHtml = '';
-                STATUS_OPCOES.forEach(opt => {
-                    const selected = m.status_compra === opt ? 'selected' : '';
-                    optionsHtml += `<option value="${opt}" ${selected}>${opt}</option>`;
-                });
-
-                div.innerHTML += `<div class="mat-card">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                        <span class="badge ${getBadgeClass(m.status_compra)}">${m.status_compra}</span>
-                        <small style="color:${saldo>0?'red':'green'}">Saldo: ${saldo}</small>
-                    </div>
-                    <div class="mat-row"><div class="col-span-12"><label class="form-label">Descrição</label><input type="text" class="form-control" value="${m.descricao}" onblur="upMat('${m.id}','descricao',this.value)"></div></div>
-                    <div class="mat-row">
-                        <div class="col-span-3"><label class="form-label">Cód</label><input type="text" class="form-control" value="${m.codigo_item||''}" onblur="upMat('${m.id}','codigo_item',this.value)"></div>
-                        <div class="col-span-3"><label class="form-label">Qtd Sol.</label><input type="number" class="form-control" value="${qo}" onblur="upMat('${m.id}','quantidade',this.value)"></div>
-                        <div class="col-span-3"><label class="form-label">Qtd Atend.</label><input type="number" class="form-control" value="${qa}" onblur="upMat('${m.id}','qtd_atendida',this.value)"></div>
-                        <div class="col-span-3"><label class="form-label">Status</label>
-                            <select class="form-control" onchange="upMat('${m.id}','status_compra',this.value)">
-                                ${optionsHtml}
-                            </select>
-                        </div>
-                    </div>
-                    <div class="mat-row">
-                        <div class="col-span-3"><label class="form-label">Forn.</label><input type="text" class="form-control" value="${m.fornecedor||''}" onblur="upMat('${m.id}','fornecedor',this.value)"></div>
-                        <div class="col-span-2"><label class="form-label" style="color:var(--accent); font-weight:bold;">AF (Nº)</label><input type="text" class="form-control" style="border-color:var(--accent);" value="${m.num_af||''}" onblur="upMat('${m.id}','num_af',this.value)"></div>
-                        <div class="col-span-2"><label class="form-label">Unit.</label><input type="number" class="form-control" value="${m.valor||''}" onblur="upMat('${m.id}','valor',this.value)"></div>
-                        <div class="col-span-2"><label class="form-label">Total</label><div style="font-weight:bold; color:var(--primary); padding-top:8px;">R$ ${tot.toFixed(2)}</div></div>
-                        <div class="col-span-3"><label class="form-label">Data</label><input type="date" class="form-control" value="${dt}" onblur="upMat('${m.id}','data_entrega',this.value)"></div>
-                    </div>
-                </div>`;
+                let optionsHtml = ''; STATUS_OPCOES.forEach(opt => { optionsHtml += `<option value="${opt}" ${m.status_compra === opt ? 'selected' : ''}>${opt}</option>`; });
+                div.innerHTML += `<div class="mat-card"><div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span class="badge ${getBadgeClass(m.status_compra)}">${m.status_compra}</span><small style="color:${saldo>0?'red':'green'}">Saldo: ${saldo}</small></div><div class="mat-row"><div class="col-span-12"><label class="form-label">Descrição</label><input type="text" class="form-control" value="${m.descricao}" onblur="upMat('${m.id}','descricao',this.value)"></div></div><div class="mat-row"><div class="col-span-3"><label class="form-label">Cód</label><input type="text" class="form-control" value="${m.codigo_item||''}" onblur="upMat('${m.id}','codigo_item',this.value)"></div><div class="col-span-3"><label class="form-label">Qtd Sol.</label><input type="number" class="form-control" value="${qo}" onblur="upMat('${m.id}','quantidade',this.value)"></div><div class="col-span-3"><label class="form-label">Qtd Atend.</label><input type="number" class="form-control" value="${qa}" onblur="upMat('${m.id}','qtd_atendida',this.value)"></div><div class="col-span-3"><label class="form-label">Status</label><select class="form-control" onchange="upMat('${m.id}','status_compra',this.value)">${optionsHtml}</select></div></div><div class="mat-row"><div class="col-span-3"><label class="form-label">Forn.</label><input type="text" class="form-control" value="${m.fornecedor||''}" onblur="upMat('${m.id}','fornecedor',this.value)"></div><div class="col-span-2"><label class="form-label" style="color:var(--accent); font-weight:bold;">AF (Nº)</label><input type="text" class="form-control" style="border-color:var(--accent);" value="${m.num_af||''}" onblur="upMat('${m.id}','num_af',this.value)"></div><div class="col-span-2"><label class="form-label">Unit.</label><input type="number" class="form-control" value="${m.valor||''}" onblur="upMat('${m.id}','valor',this.value)"></div><div class="col-span-2"><label class="form-label">Total</label><div style="font-weight:bold; color:var(--primary); padding-top:8px;">R$ ${tot.toFixed(2)}</div></div><div class="col-span-3"><label class="form-label">Data</label><input type="date" class="form-control" value="${dt}" onblur="upMat('${m.id}','data_entrega',this.value)"></div></div></div>`;
             });
         }
-        
-        async function upMat(id,k,v) { 
-            const d={}; d[k]=v; if(k=='data_entrega' && !v) d[k]=null; await pb.collection('materiais').update(id,d);
-            if(['status_compra','valor','qtd_atendida','num_af'].includes(k)) { 
-                const m=await pb.collection('materiais').getOne(id); 
-                await registrarHistorico(m.acao_vinculada, `alterou ${k} para ${v}`); 
-                await calcularStatusGeral(m.acao_vinculada);
-            }
-            renderMateriaisModal(State.acaoAtualId);
-        }
-        
-        // --- CHAT & ACTIONS ---
-        async function renderChat(id) {
-            const d=document.getElementById('chat-feed'); const r=await safeRequest(pb.collection('historico').getFullList({filter:`acao_vinculada="${id}"`,sort:'created',expand:'usuario'}));
-            d.innerHTML='';
-            if(r.success) r.data.forEach(h=>{
-                const me=h.expand?.usuario?.id===State.usuarioAtual.id;
-                const dh=new Date(h.created).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-                if(h.tipo==='sistema') d.innerHTML+=`<div class="chat-log-sys">${h.mensagem} <small>${dh}</small></div>`;
-                else d.innerHTML+=`<div style="align-self:${me?'flex-end':'flex-start'};background:${me?'#dbeafe':'#f1f5f9'};padding:8px;border-radius:8px;max-width:85%;margin-bottom:5px;"><b>${h.expand?.usuario?.name||'Sys'}:</b> ${h.mensagem} <span class="chat-time">${dh}</span></div>`;
-            });
-            d.scrollTop=d.scrollHeight;
-        }
-        
-        async function enviarMensagem() { 
-            const m=document.getElementById('chat-msg').value; if(!m)return; 
-            await safeRequest(pb.collection('historico').create({acao_vinculada:State.acaoAtualId,usuario:State.usuarioAtual.id,mensagem:m,tipo:'comentario'})); 
-            document.getElementById('chat-msg').value=''; 
-            renderChat(State.acaoAtualId); 
-        }
-        
-        async function salvarSolicitacao() {
-            const t=document.getElementById('inp-titulo').value; const r=document.getElementById('inp-responsavel').value; 
-            if(!t || !r) return showToast('Preencha título e responsável','error');
-            
-            const dadosSolicitacao = {
-                titulo: t,
-                descricao: document.getElementById('inp-descricao').value,
-                ordem_servico: document.getElementById('inp-os').value,
-                numero_sc: document.getElementById('inp-sc').value,
-                categoria: document.getElementById('inp-categoria').value,
-                urgencia: document.getElementById('inp-urgencia').value,
-                responsavel: r,
-                status: 'Aguardando materiais'
-            };
-
-            const res = await safeRequest(pb.collection('acoes').create(dadosSolicitacao), "Salvando...");
-            
-            if(res.success) { 
-                await registrarHistorico(res.data.id, `criou solicitação.`); 
-                showToast('Criado!'); 
-                fecharModal('modal-criacao'); 
-                
-                document.getElementById('inp-titulo').value=''; 
-                document.getElementById('inp-descricao').value=''; 
-                document.getElementById('inp-os').value=''; 
-                document.getElementById('inp-sc').value='';
-                
-                carregarDadosAtuais(); 
-            }
-        }
+        async function upMat(id,k,v) { const d={}; d[k]=v; if(k=='data_entrega' && !v) d[k]=null; await pb.collection('materiais').update(id,d); if(['status_compra','valor','qtd_atendida','num_af'].includes(k)) { const m=await pb.collection('materiais').getOne(id); await registrarHistorico(m.acao_vinculada, `alterou ${k} para ${v}`); await calcularStatusGeral(m.acao_vinculada); } renderMateriaisModal(State.acaoAtualId); }
+        async function renderChat(id) { const d=document.getElementById('chat-feed'); const r=await safeRequest(pb.collection('historico').getFullList({filter:`acao_vinculada="${id}"`,sort:'created',expand:'usuario'})); d.innerHTML=''; if(r.success) r.data.forEach(h=>{ const me=h.expand?.usuario?.id===State.usuarioAtual.id; const dh=new Date(h.created).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}); if(h.tipo==='sistema') d.innerHTML+=`<div class="chat-log-sys">${h.mensagem} <small>${dh}</small></div>`; else d.innerHTML+=`<div style="align-self:${me?'flex-end':'flex-start'};background:${me?'#dbeafe':'#f1f5f9'};padding:8px;border-radius:8px;max-width:85%;margin-bottom:5px;"><b>${h.expand?.usuario?.name||'Sys'}:</b> ${h.mensagem} <span class="chat-time">${dh}</span></div>`; }); d.scrollTop=d.scrollHeight; }
+        async function enviarMensagem() { const m=document.getElementById('chat-msg').value; if(!m)return; await safeRequest(pb.collection('historico').create({acao_vinculada:State.acaoAtualId,usuario:State.usuarioAtual.id,mensagem:m,tipo:'comentario'})); document.getElementById('chat-msg').value=''; renderChat(State.acaoAtualId); }
         
         async function adicionarMaterial() {
             const n=document.getElementById('mat-nome').value; if(!n) return;
-            
-            const novoMaterial = { 
-                acao_vinculada: State.acaoAtualId, 
-                descricao: n, 
-                codigo_item: document.getElementById('mat-code').value, 
-                quantidade: document.getElementById('mat-qtd').value || 1, 
-                qtd_atendida: document.getElementById('mat-qtd').value || 1, 
-                urgencia_material: 'Média', 
-                status_compra: 'Em cotação' 
-            };
-
-            await safeRequest(pb.collection('materiais').create(novoMaterial));
-            await registrarHistorico(State.acaoAtualId, `adicionou item: ${n}`);
-            await calcularStatusGeral(State.acaoAtualId);
-            
-            document.getElementById('mat-nome').value=''; 
-            document.getElementById('mat-code').value=''; 
-            document.getElementById('mat-qtd').value='';
-            
-            renderMateriaisModal(State.acaoAtualId);
+            const acaoPai = State.dadosAcoes.find(a => a.id === State.acaoAtualId);
+            const urgenciaHerdada = acaoPai ? acaoPai.urgencia : 'Média';
+            const novoMaterial = { acao_vinculada: State.acaoAtualId, descricao: n, codigo_item: document.getElementById('mat-code').value, quantidade: document.getElementById('mat-qtd').value || 1, qtd_atendida: document.getElementById('mat-qtd').value || 1, urgencia_material: urgenciaHerdada, status_compra: 'Em cotação' };
+            await safeRequest(pb.collection('materiais').create(novoMaterial)); await registrarHistorico(State.acaoAtualId, `adicionou item: ${n}`); await calcularStatusGeral(State.acaoAtualId);
+            document.getElementById('mat-nome').value=''; document.getElementById('mat-code').value=''; document.getElementById('mat-qtd').value=''; renderMateriaisModal(State.acaoAtualId);
         }
-        
-        // --- PERFIL ---
-        function abrirPerfil() {
-            document.getElementById('modal-perfil').classList.add('active');
-        }
-        async function salvarPerfil() {
-            const fileInp = document.getElementById('perf-avatar');
-            const oldPass = document.getElementById('perf-old-pass').value;
-            const p1 = document.getElementById('perf-pass').value;
-            const p2 = document.getElementById('perf-pass-conf').value;
-            
-            const formData = new FormData();
-            let temMudanca = false;
-
-            if (p1 || p2) {
-                if (!oldPass) return showToast("Informe a Senha Atual para alterar.", 'error');
-                if (p1 !== p2) return showToast("Novas senhas não conferem.", 'error');
-                if (p1.length < 5) return showToast("Mínimo 5 caracteres.", 'error');
-                
-                formData.append('oldPassword', oldPass);
-                formData.append('password', p1);
-                formData.append('passwordConfirm', p2);
-                temMudanca = true;
-            }
-
-            if (fileInp.files[0]) {
-                formData.append('avatar', fileInp.files[0]);
-                temMudanca = true;
-            }
-
-            if (!temMudanca) return showToast("Nada alterado.");
-
-            const r = await safeRequest(pb.collection('users').update(State.usuarioAtual.id, formData), "Atualizando...");
-            
-            if (r.success) {
-                showToast("Perfil atualizado! Login necessário.");
-                document.getElementById('modal-perfil').classList.remove('active');
-                setTimeout(logout, 1500);
-            }
+        async function salvarSolicitacao() {
+            const t=document.getElementById('inp-titulo').value; const r=document.getElementById('inp-responsavel').value; 
+            if(!t || !r) return showToast('Preencha título e responsável','error');
+            const dadosSolicitacao = { titulo: t, descricao: document.getElementById('inp-descricao').value, ordem_servico: document.getElementById('inp-os').value, numero_sc: document.getElementById('inp-sc').value, categoria: document.getElementById('inp-categoria').value, urgencia: document.getElementById('inp-urgencia').value, responsavel: r, status: 'Aguardando materiais' };
+            const res = await safeRequest(pb.collection('acoes').create(dadosSolicitacao), "Salvando...");
+            if(res.success) { await registrarHistorico(res.data.id, `criou solicitação.`); showToast('Criado!'); fecharModal('modal-criacao'); document.getElementById('inp-titulo').value=''; document.getElementById('inp-descricao').value=''; document.getElementById('inp-os').value=''; document.getElementById('inp-sc').value=''; carregarDadosAtuais(); }
         }
 
-        // --- IMPORTS ---
-        function prepararImportacao(inp) { 
-            if(!inp.files[0])return; 
-            const r=new FileReader(); 
-            r.onload=e=>{ 
-                const wb=XLSX.read(e.target.result,{type:'array'}); 
-                State.cacheExcel=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1}); 
-                const h=State.cacheExcel[0]; 
-                const s=['map-desc','map-qtd','map-code']; 
-                s.forEach(id=>{ 
-                    const el=document.getElementById(id); 
-                    el.innerHTML='<option value="">Selecione</option>'; 
-                    h.forEach((c,i)=>el.innerHTML+=`<option value="${i}">${c}</option>`); 
-                });
-                document.getElementById('modal-import-map').classList.add('active'); 
-                inp.value=''; 
-            }; 
-            r.readAsArrayBuffer(inp.files[0]); 
-        }
-        
+        // Imports Logic (Mantido)
+        function preparImportacao(inp) { if(!inp.files[0])return; const r=new FileReader(); r.onload=e=>{ const wb=XLSX.read(e.target.result,{type:'array'}); State.cacheExcel=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1}); const h=State.cacheExcel[0]; const s=['map-desc','map-qtd','map-code']; s.forEach(id=>{ const el=document.getElementById(id); el.innerHTML='<option value="">Selecione</option>'; h.forEach((c,i)=>el.innerHTML+=`<option value="${i}">${c}</option>`); }); document.getElementById('modal-import-map').classList.add('active'); inp.value=''; }; r.readAsArrayBuffer(inp.files[0]); }
         async function confirmarImportacao() {
-            const d=document.getElementById('map-desc').value; 
-            const q=document.getElementById('map-qtd').value; 
-            const c=document.getElementById('map-code').value;
-            
+            const d=document.getElementById('map-desc').value; const q=document.getElementById('map-qtd').value; const c=document.getElementById('map-code').value;
             if(!d || !q) return showToast('Campos obrigatórios','error'); 
-            
-            showLoading('Importando...'); 
-            let cnt=0;
-            for(let i=1;i<State.cacheExcel.length;i++){ 
-                const r=State.cacheExcel[i]; 
-                if(r[d]){ 
-                    const qt=r[q]||1; 
-                    
-                    const matImport = {
-                        acao_vinculada: State.acaoAtualId, 
-                        descricao: r[d], 
-                        quantidade: qt, 
-                        qtd_atendida: qt, 
-                        codigo_item: c ? r[c] : '', 
-                        urgencia_material: 'Média', 
-                        status_compra: 'Em cotação'
-                    };
-
-                    await pb.collection('materiais').create(matImport); 
-                    cnt++; 
-                } 
-            }
-            
-            await registrarHistorico(State.acaoAtualId, `importou ${cnt} itens.`); 
-            await calcularStatusGeral(State.acaoAtualId);
-            
-            showToast(`${cnt} importados!`); 
-            fecharModal('modal-import-map'); 
-            renderMateriaisModal(State.acaoAtualId); 
-            hideLoading();
+            const acaoPai = State.dadosAcoes.find(a => a.id === State.acaoAtualId); const urgenciaHerdada = acaoPai ? acaoPai.urgencia : 'Média';
+            showLoading('Importando...'); let cnt=0;
+            for(let i=1;i<State.cacheExcel.length;i++){ const r=State.cacheExcel[i]; if(r[d]){ const qt=r[q]||1; const matImport = { acao_vinculada: State.acaoAtualId, descricao: r[d], quantidade: qt, qtd_atendida: qt, codigo_item: c ? r[c] : '', urgencia_material: urgenciaHerdada, status_compra: 'Em cotação' }; await pb.collection('materiais').create(matImport); cnt++; } }
+            await registrarHistorico(State.acaoAtualId, `importou ${cnt} itens.`); await calcularStatusGeral(State.acaoAtualId); showToast(`${cnt} importados!`); fecharModal('modal-import-map'); renderMateriaisModal(State.acaoAtualId); hideLoading();
         }
-
-        function fecharModal(id) { document.getElementById(id).classList.remove('active'); State.acaoAtualId=null; }
         function abrirModalCriacao() { document.getElementById('modal-criacao').classList.add('active'); }
+        function fecharModal(id) { document.getElementById(id).classList.remove('active'); State.acaoAtualId=null; }
 
         checkAuth();
     </script>
